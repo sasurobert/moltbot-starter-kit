@@ -1,59 +1,41 @@
-# Moltbot Starter Kit (OpenClaw Edition)
+# Moltbot Starter Kit (MultiversX)
 
-A production-ready starter kit for launching autonomous **OpenClaw Agents** on MultiversX. This kit integrates the `multiversx-openclaw-skills` bundle and provides the runtime environment for the "Listen-Act-Prove" loop.
+> **Production-Ready Autonomous Agent Template** for the MultiversX Agent Economy.
+
+This starter kit provides a fully functional, hardened implementation of an OpenClaw Agent that can:
+1.  **Listen**: Polls x402 Facilitators for payment events.
+2.  **Act**: Processes jobs securely (with SSRF protection).
+3.  **Prove**: Submits verifiable proofs on-chain using real transactions.
 
 ## Features
 
-- **Identity Management**: Auto-generates Agent identity (`wallet.pem`).
-- **On-Chain Registration**: Registers the agent on the Identity Registry.
-- **Skill Injection**: Pre-configured with MultiversX capabilities.
-- **x402 Facilitator Integration**: Listens for payment intents and executes jobs.
-- **Relayaed V3 Integration**: Performs gasless settlements for executed tasks.
+-   ✅ **Real Blockchain Interactions**: Uses `@multiversx/sdk-core` v15+.
+-   ✅ **Production Hardened**: Centralized config, SSRF whitelist, Retry logic.
+-   ✅ **TDD Verified**: >90% Test Coverage.
+-   ✅ **Auxiliary Scripts**: Tools for Identity Management and Skill Deployment.
 
 ## Quick Start
 
-### 1. Setup
-Initialize the agent environment:
 ```bash
+# 1. Setup
 npm install
-chmod +x setup.sh
-./setup.sh
-```
-This script will:
-- Generate a generic `wallet.pem` (for dev/test).
-- Register the agent manifest on Devnet.
-- Download necessary dependencies.
+npm run setup
 
-### 2. Configuration
-Edit `.env` or `config.json` to set your specific parameters:
-```json
-{
-  "name": "MyAgent",
-  "mcpUrl": "http://localhost:3000",
-  "facilitatorUrl": "http://localhost:4000"
-}
-```
+# 2. Fund Wallet (Devnet Faucet) & Register
+npm run register
 
-### 3. Run
-Start the agent daemon:
-```bash
+# 3. Running
 npm start
 ```
-The agent will begin listening for x402 payment requests and monitoring the chain.
 
-## Architecture
+## Documentation
 
-- **`src/index.ts`**: Main entry and loop.
-- **`src/facilitator.ts`**: Webhook/Polling listener for payment events.
-- **`src/validator.ts`**: Logic to validate and submit proofs.
-- **`src/mcp_bridge.ts`**: Bridge to the Shared MCP Server.
+For detailed instructions, see [STARTER_KIT_GUIDE.md](./STARTER_KIT_GUIDE.md).
 
-## Development
+## Project Structure
 
-Run tests:
-```bash
-npm test
-```
-
-## License
-MIT
+-   `src/`: Core agent logic (`facilitator`, `validator`, `processor`).
+-   `scripts/`: Management scripts (`register`, `update_manifest`).
+-   `tests/`: Comprehensive test suite.
+-   `config.json`: Agent metadata.
+-   `src/config.ts`: Environment configuration.

@@ -1,12 +1,12 @@
 # Moltbot Starter Kit Guide
 
-The **Moltbot Starter Kit** is a production-ready template for launching **Autonomous OpenClaw Agents** on MultiversX. It implements the "Listen-Act-Prove" loop out of the box.
+The **Moltbot Starter Kit** is a production-ready template for launching **Autonomous OpenClaw Agents** on MultiversX. It implements the "Listen-Act-Prove" loop out of the box with real blockchain interactions.
 
 ## 1. Prerequisites
 
 - Node.js v18+
 - Access to a MultiversX Network (Devnet/Mainnet)
-- A funded wallet (for initial registration, optional for operation if fully relayed).
+- A funded wallet (for initial registration and gas fees).
 
 ## 2. Quick Start
 
@@ -20,33 +20,30 @@ npm install
 ### Step 2: Identity Setup
 Run the setup script to generate your agent's Identity (`wallet.pem`).
 ```bash
-# This will generate wallet.pem
+# This generates wallet.pem and creates a default .env
 npm run setup
 ```
-*Note: securely back up `wallet.pem` if using mainnet.*
+*Note: Make sure to fund the address in `wallet.pem` via the [MultiversX Faucet](https://r3.multiversx.com/faucet).*
 
 ### Step 3: Register on Chain
-Edit `config.json` to define your agent's persona:
-```json
-{
-  "agentName": "MyFirstAgent",
-  "capabilities": ["search", "defi"],
-  "pricing": { ... }
-}
-```
-Then run the registration script (Requires EGLD for gas):
+Edit `config.json` to define your agent's persona. Then run the registration script:
 ```bash
 npm run register
 ```
-*This mints the Agent ID (SFT) and logs the `Nonce`.*
+*This transaction registers your Agent ID on the Identity Registry.*
 
 ### Step 4: Configure Environment
-Create a `.env` file:
+The kit uses a centralized configuration in `src/config.ts` powered by `.env`.
+Check your `.env` file:
+
 ```env
-MULTIVERSX_MCP_URL=http://localhost:3000
+# Network
+MULTIVERSX_CHAIN_ID=D
+MULTIVERSX_API_URL=https://devnet-api.multiversx.com
+
+# Core Services
 X402_FACILITATOR_URL=http://localhost:4000
-MULTIVERSX_RELAY_URL=http://localhost:4000/relay
-MULTIVERSX_VALIDATION_REGISTRY=erd1...
+ALLOWED_DOMAINS=example.com,api.myapp.com # SSRF Whitelist
 ```
 
 ### Step 5: Launch
@@ -56,29 +53,29 @@ npm start
 ```
 Your agent is now listening for x402 payment requests!
 
-## 3. Architecture
+## 3. Production Features
 
-- **The Loop**: `src/index.ts` runs the main event loop.
-- **Listeners**: `src/facilitator.ts` polls for incoming jobs.
-- **Execution**: The agent logic uses `multiversx-openclaw-skills` (in `node_modules`) to execute payments (`pay.ts`) and submit proofs (`prove.ts`).
+### Centralized Configuration
+All constants (Gas limits, URLs, Addresses) are managed in `src/config.ts`. **Do not hardcode values.**
 
-## 4. Customization
+### Security: SSRF Protection
+The `JobProcessor` enforces a domain whitelist for fetching payloads.
+- **Default**: Only specific test domains allowed.
+- **Production**: Update `ALLOWED_DOMAINS` in `.env` to whitelist your data sources.
 
-### Adding Capability Logic
-Modify `src/index.ts` inside the `facilitator.onPayment` callback:
+### Reliability
+The `Validator` includes automatic retry logic (3 attempts with backoff) for submitting on-chain proofs, ensuring robustness against network blips.
 
-```typescript
-facilitator.onPayment(async (payment) => {
-    // 1. Analyze Job
-    if (payment.meta.task === 'analyze-token') {
-       // Call your AI logic here
-       const analysis = await myAiModel.run(payment.meta.token);
-       
-       // 2. Submit Result
-       await startProof(payment.jobId, hash(analysis));
-    }
-});
-```
+## 4. Auxiliary Tools
+
+- **Update Agent**: Change your metadata on-chain without re-registering.
+  ```bash
+  npx ts-node scripts/update_manifest.ts
+  ```
+- **Deploy Skills**: Simulate packaging and deploying skills to the registry.
+  ```bash
+  npx ts-node scripts/deploy_skill.ts
+  ```
 
 ## 5. Deployment
 
@@ -87,5 +84,5 @@ For production, we recommend using **PM2** or **Docker**:
 ```bash
 # Dockerfile provided in repo
 docker build -t moltbot .
-docker run -v $(pwd)/wallet.pem:/app/wallet.pem moltbot
+docker run -v $(pwd)/wallet.pem:/app/wallet.pem --env-file .env moltbot
 ```

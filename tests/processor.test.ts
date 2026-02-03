@@ -33,4 +33,14 @@ describe("JobProcessor", () => {
         expect(axios.get).toHaveBeenCalledWith(url);
         expect(result).toBe(expectedHash);
     });
+
+    test("should throw error for disallowed domain (SSRF check)", async () => {
+        const url = "http://evil.com/metadata";
+
+        await expect(processor.process({ payload: url, isUrl: true }))
+            .rejects
+            .toThrow("Domain not allowed");
+
+        expect(axios.get).not.toHaveBeenCalledWith(url);
+    });
 });

@@ -4,6 +4,7 @@ import { ApiNetworkProvider } from "@multiversx/sdk-network-providers";
 import { promises as fs } from "fs";
 import * as dotenv from "dotenv";
 import * as path from "path";
+import { CONFIG } from "../src/config";
 
 dotenv.config();
 
@@ -11,8 +12,7 @@ async function main() {
     console.log("🚀 Starting Agent Registration...");
 
     // 1. Setup Provider & Signer
-    const providerUrl = process.env.MULTIVERSX_API_URL || "https://devnet-api.multiversx.com";
-    const provider = new ApiNetworkProvider(providerUrl);
+    const provider = new ApiNetworkProvider(CONFIG.API_URL);
 
     const pemPath = process.env.MULTIVERSX_PRIVATE_KEY || path.resolve("wallet.pem");
     const pemContent = await fs.readFile(pemPath, "utf8");
@@ -30,10 +30,7 @@ async function main() {
     console.log(`Registering Agent: ${config.agentName}...`);
 
     // 3. Construct Transaction
-    const registryAddress = process.env.IDENTITY_REGISTRY_ADDRESS;
-    if (!registryAddress) {
-        console.warn("IDENTITY_REGISTRY_ADDRESS not set. Using dummy for demo.");
-    }
+    const registryAddress = CONFIG.ADDRESSES.IDENTITY_REGISTRY;
 
     const account = await provider.getAccount(senderAddress);
 
@@ -44,9 +41,9 @@ async function main() {
     const tx = new Transaction({
         nonce: BigInt(account.nonce),
         value: "0",
-        receiver: new Address(registryAddress || "erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu"),
-        gasLimit: 10000000n,
-        chainID: process.env.MULTIVERSX_CHAIN_ID || "D",
+        receiver: new Address(registryAddress),
+        gasLimit: CONFIG.GAS_LIMITS.REGISTER,
+        chainID: CONFIG.CHAIN_ID,
         data: data,
         sender: senderAddress
     });

@@ -44,4 +44,17 @@ describe("Validator", () => {
         expect(mockProvider.getAccount).toHaveBeenCalled();
         expect(mockProvider.sendTransaction).toHaveBeenCalled();
     });
+
+    test("should retry on failure and eventually succeed", async () => {
+        // Mock failure first 2 times, success on 3rd
+        mockProvider.sendTransaction
+            .mockRejectedValueOnce(new Error("Network Error"))
+            .mockRejectedValueOnce(new Error("Timeout"))
+            .mockResolvedValue("real_tx_hash_retry");
+
+        const txHash = await validator.submitProof("job-retry", "hash-retry");
+
+        expect(txHash).toBe("real_tx_hash_retry");
+        expect(mockProvider.sendTransaction).toHaveBeenCalledTimes(3);
+    }, 10000); // Increase timeout for backoff
 });

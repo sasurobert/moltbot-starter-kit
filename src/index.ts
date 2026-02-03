@@ -5,6 +5,7 @@ import { Validator } from "./validator";
 import { JobProcessor } from "./processor";
 import { promises as fs } from "fs";
 import * as path from "path";
+import { CONFIG } from "./config";
 
 dotenv.config();
 
@@ -21,7 +22,7 @@ async function main() {
     }
 
     // Initialize Bridges
-    const mcp = new McpBridge(process.env.MULTIVERSX_MCP_URL || "http://localhost:3000");
+    const mcp = new McpBridge(CONFIG.PROVIDERS.MCP_URL);
     const validator = new Validator();
     const facilitator = new Facilitator();
     const processor = new JobProcessor();

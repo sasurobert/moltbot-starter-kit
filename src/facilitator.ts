@@ -1,4 +1,5 @@
 import axios from "axios";
+import { CONFIG } from "./config";
 
 export interface PaymentEvent {
     amount: string;
@@ -14,7 +15,7 @@ export class Facilitator {
     private facilitatorUrl: string;
 
     constructor(url?: string) {
-        this.facilitatorUrl = url || process.env.X402_FACILITATOR_URL || "http://localhost:4000";
+        this.facilitatorUrl = url || CONFIG.PROVIDERS.FACILITATOR_URL;
     }
 
     onPayment(callback: PaymentCallback) {
