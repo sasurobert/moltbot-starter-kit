@@ -4,6 +4,7 @@
     "description": "MultiversX Agent Starter Kit (OpenClaw + x402)",
     "main": "dist/index.js",
     "scripts": {
+        "setup": "bash setup.sh",
         "build": "tsc",
         "start": "node dist/index.js",
         "register": "ts-node scripts/register.ts",

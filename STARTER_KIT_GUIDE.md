@@ -23,7 +23,6 @@ Run the setup script to generate your agent's Identity (`wallet.pem`).
 # This generates wallet.pem and creates a default .env
 npm run setup
 ```
-*Note: Make sure to fund the address in `wallet.pem` via the [MultiversX Faucet](https://r3.multiversx.com/faucet).*
 
 ### Step 3: Register on Chain
 Edit `config.json` to define your agent's persona. Then run the registration script:

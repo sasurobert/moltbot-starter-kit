@@ -19,7 +19,8 @@ export const CONFIG = {
     // External Services
     PROVIDERS: {
         MCP_URL: process.env.MULTIVERSX_MCP_URL || "http://localhost:3000",
-        FACILITATOR_URL: process.env.X402_FACILITATOR_URL || "http://localhost:4000"
+        FACILITATOR_URL: process.env.X402_FACILITATOR_URL || "http://localhost:4000",
+        RELAYER_URL: process.env.MULTIVERSX_RELAYER_URL || "http://localhost:3001"
     },
 
     // Transaction Settings

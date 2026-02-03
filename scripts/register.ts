@@ -4,9 +4,51 @@ import { ApiNetworkProvider } from "@multiversx/sdk-network-providers";
 import { promises as fs } from "fs";
 import * as dotenv from "dotenv";
 import * as path from "path";
+import axios from "axios";
+import { createHash } from "crypto";
 import { CONFIG } from "../src/config";
 
 dotenv.config();
+
+/**
+ * Solve a Lib-based PoW Challenge for the Relayer
+ */
+function solveChallenge(challenge: any): string {
+    console.log(`🧩 Solving PoW Challenge (Difficulty: ${challenge.difficulty} bits)...`);
+    const startTime = Date.now();
+    let nonce = 0;
+    const difficulty = challenge.difficulty;
+    const fullBytes = Math.floor(difficulty / 8);
+    const remainingBits = difficulty % 8;
+    const threshold = 1 << (8 - remainingBits);
+
+    while (true) {
+        const data = `${challenge.address}${challenge.salt}${nonce}`;
+        const hash = createHash("sha256").update(data).digest();
+
+        let isValid = true;
+        // Check full bytes
+        for (let i = 0; i < fullBytes; i++) {
+            if (hash[i] !== 0) {
+                isValid = false;
+                break;
+            }
+        }
+
+        if (isValid && remainingBits > 0) {
+            if (hash[fullBytes] >= threshold) {
+                isValid = false;
+            }
+        }
+
+        if (isValid) {
+            const timeTaken = (Date.now() - startTime) / 1000;
+            console.log(`✅ Challenge Solved in ${timeTaken.toFixed(2)}s! Nonce: ${nonce}`);
+            return nonce.toString();
+        }
+        nonce++;
+    }
+}
 
 async function main() {
     console.log("🚀 Starting Agent Registration...");
@@ -31,11 +73,9 @@ async function main() {
 
     // 3. Construct Transaction
     const registryAddress = CONFIG.ADDRESSES.IDENTITY_REGISTRY;
-
     const account = await provider.getAccount(senderAddress);
 
     const nameHex = Buffer.from(config.agentName).toString("hex");
-    // registerAgent@<NameHex>
     const data = new TransactionPayload(`registerAgent@${nameHex}`);
 
     const tx = new Transaction({
@@ -48,27 +88,47 @@ async function main() {
         sender: senderAddress
     });
 
-    // 4. Sign
+    // Sign the transaction (always required, even for relaying)
     const serialized = tx.serializeForSigning();
     const signature = await signer.sign(serialized);
     tx.applySignature(signature);
 
-    console.log("Transaction Signed. Broadcasting...");
+    // 4. Determine Strategy (Local vs Relayer)
+    const balance = BigInt(account.balance.toString());
+    const useRelayer = balance === 0n || !!process.env.FORCE_RELAYER;
 
-    // 5. Broadcast (Real)
-    try {
-        const txHash = await provider.sendTransaction(tx);
-        console.log(`✅ Registration Transaction Sent: ${txHash}`);
-        console.log(`Check Explorer: https://devnet-explorer.multiversx.com/transactions/${txHash}`);
+    if (useRelayer) {
+        console.log("Empty wallet detected. Using Relayer fallback...");
+        try {
+            // A. Get Challenge
+            const { data: challenge } = await axios.post(`${CONFIG.PROVIDERS.RELAYER_URL}/challenge`, {
+                address: senderAddress.bech32()
+            });
 
-        // 6. Update Config (Simulate nonce for now or fetch later)
-        // Ideally we wait for transaction and parse logs, but for starter script just claiming "Done" is ok.
-        console.log("Update config.json with your new Agent ID once confirmed.");
-    } catch (e: any) {
-        console.error("Failed to broadcast transaction:", e.message);
-        if (e.message.includes("insufficient funds")) {
-            console.error("🔴 ERROR: Insufficient funds. Please faucet your wallet!");
-            console.error(`Address: ${senderAddress.bech32()}`);
+            // B. Solve Challenge
+            const challengeNonce = solveChallenge(challenge);
+
+            // C. Relay
+            console.log("Broadcasting via Relayer...");
+            const { data: relayResult } = await axios.post(`${CONFIG.PROVIDERS.RELAYER_URL}/relay`, {
+                transaction: tx.toPlainObject(),
+                challengeNonce
+            });
+
+            console.log(`✅ Relayed Transaction Sent: ${relayResult.txHash}`);
+            console.log(`Check Explorer: ${CONFIG.EXPLORER_URL}/transactions/${relayResult.txHash}`);
+        } catch (e: any) {
+            console.error("Relaying failed:", e.response?.data?.error || e.message);
+            process.exit(1);
+        }
+    } else {
+        console.log("Wallet funded. Broadcasting locally...");
+        try {
+            const txHash = await provider.sendTransaction(tx);
+            console.log(`✅ Transaction Sent: ${txHash}`);
+            console.log(`Check Explorer: ${CONFIG.EXPLORER_URL}/transactions/${txHash}`);
+        } catch (e: any) {
+            console.error("Failed to broadcast transaction:", e.message);
         }
     }
 }
