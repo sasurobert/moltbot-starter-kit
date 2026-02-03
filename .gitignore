@@ -1,0 +1,8 @@
+node_modules/
+dist/
+coverage/
+.env
+*.pem
+wallet.pem
+config.json
+.DS_Store
