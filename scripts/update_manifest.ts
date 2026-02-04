@@ -28,31 +28,58 @@ async function main() {
 
     // 2. Load Config to get new details
     const configPath = path.resolve("config.json");
-    const config = JSON.parse(await fs.readFile(configPath, "utf8"));
+    const config: any = JSON.parse(await fs.readFile(configPath, "utf8"));
 
     console.log(`Updating Agent: ${config.agentName}`);
     console.log("New Capabilities:", config.capabilities);
 
-    // 3. Construct Transaction
-    // Endpoint: update_agent
-    // Arguments: [Name] (Optional if changing name, otherwise just pass same name)
-    // We typically pass name to identify/validate, or just update metadata associated with sender.
-    // Let's assume standard: update_agent@<NameHex>
+    // 3. Construct Transaction with ALL 3 required arguments
+    // Contract signature: update_agent(nonce, new_uri, new_public_key)
 
     const registryAddress = process.env.IDENTITY_REGISTRY_ADDRESS;
     if (!registryAddress) {
-        console.warn("⚠️ IDENTITY_REGISTRY_ADDRESS not set. Using dummy address for safety.");
+        console.error("❌ IDENTITY_REGISTRY_ADDRESS not set in .env");
+        process.exit(1);
     }
 
     const account = await provider.getAccount(senderAddress);
 
-    const nameHex = Buffer.from(config.agentName).toString("hex");
-    const data = new TransactionPayload(`update_agent@${nameHex}`);
+    // Argument 1: Agent Nonce (NFT token nonce)
+    if (!config.nonce || config.nonce === 0) {
+        console.error("❌ Agent nonce not found in config.json. Register first.");
+        process.exit(1);
+    }
+    const nonceHex = BigInt(config.nonce).toString(16).padStart(2, "0");
+
+    // Argument 2: New URI - points to updated manifest/ARF JSON
+    const newUri = config.manifestUri || `https://agent.molt.bot/${config.agentName}`;
+    const uriHex = Buffer.from(newUri).toString("hex");
+
+    // Argument 3: New Public Key - can keep same or update
+    // Default to current signer's public key
+    const publicKeyHex = senderAddress.hex();
+
+    // Argument 4: Metadata (optional)
+    let metadataHex = "";
+    if (config.metadata && config.metadata.length > 0) {
+        for (const entry of config.metadata) {
+            const keyHex = Buffer.from(entry.key).toString("hex");
+            const valueHex = Buffer.from(entry.value).toString("hex");
+            metadataHex += `@${keyHex}@${valueHex}`;
+        }
+    }
+
+    console.log(`Updating Agent Nonce: ${config.nonce}`);
+    console.log(`New URI: ${newUri}`);
+    if (config.metadata?.length > 0) console.log(`New Metadata: ${config.metadata.length} entries`);
+
+    // Format: update_agent@<nonceHex>@<uriHex>@<publicKeyHex>[@<key1Hex>@<value1Hex>...]
+    const data = new TransactionPayload(`update_agent@${nonceHex}@${uriHex}@${publicKeyHex}${metadataHex}`);
 
     const tx = new Transaction({
         nonce: BigInt(account.nonce),
         value: "0",
-        receiver: new Address(registryAddress || "erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu"),
+        receiver: new Address(registryAddress),
         gasLimit: 10000000n,
         chainID: process.env.MULTIVERSX_CHAIN_ID || "D",
         data: data,

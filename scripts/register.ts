@@ -63,7 +63,7 @@ async function main() {
 
     // 2. Load Config
     const configPath = path.resolve("config.json");
-    let config = { agentName: "Moltbot", nonce: 0, pricing: "1USDC", capabilities: [] };
+    let config: any = { agentName: "Moltbot", nonce: 0, pricing: "1USDC", capabilities: [], manifestUri: "", metadata: [] };
     try {
         config = JSON.parse(await fs.readFile(configPath, "utf8"));
     } catch (e) {
@@ -71,12 +71,42 @@ async function main() {
     }
     console.log(`Registering Agent: ${config.agentName}...`);
 
-    // 3. Construct Transaction
+    // 3. Construct Transaction with ALL 3 required arguments
     const registryAddress = CONFIG.ADDRESSES.IDENTITY_REGISTRY;
     const account = await provider.getAccount(senderAddress);
 
+    // Argument 1: Agent Name (required)
     const nameHex = Buffer.from(config.agentName).toString("hex");
-    const data = new TransactionPayload(`register_agent@${nameHex}`);
+
+    // Argument 2: Agent URI - points to manifest/ARF JSON (can be updated later)
+    // Default to empty or config value, agent can set real URI via update_agent later
+    const agentUri = config.manifestUri || `https://agent.molt.bot/${config.agentName}`;
+    const uriHex = Buffer.from(agentUri).toString("hex");
+
+    // Argument 3: Public Key - for signature verification and secure communication
+    // Derive from the signer's public key (hex encoded)
+    const publicKeyHex = senderAddress.hex();
+
+    // Argument 4: Metadata (optional) - EIP-8004 compatible key-value pairs
+    // Format: register_agent@<nameHex>@<uriHex>@<publicKeyHex>[@<metadataLength>@<key1Hex>@<value1Hex>...]
+    let metadataHex = "";
+    if (config.metadata && config.metadata.length > 0) {
+        // MultiValueEncoded ManagedVec<MetadataEntry> in VM:
+        // is encoded as a sequence of (key, value) pairs
+        for (const entry of config.metadata) {
+            const keyHex = Buffer.from(entry.key).toString("hex");
+            const valueHex = Buffer.from(entry.value).toString("hex");
+            metadataHex += `@${keyHex}@${valueHex}`;
+        }
+    }
+
+    console.log(`Name: ${config.agentName}`);
+    console.log(`URI: ${agentUri}`);
+    console.log(`Public Key: ${publicKeyHex.substring(0, 16)}...`);
+    if (config.metadata?.length > 0) console.log(`Metadata: ${config.metadata.length} entries`);
+
+    // Format: register_agent@<nameHex>@<uriHex>@<publicKeyHex>[@<key1Hex>@<value1Hex>...]
+    const data = new TransactionPayload(`register_agent@${nameHex}@${uriHex}@${publicKeyHex}${metadataHex}`);
 
     const tx = new Transaction({
         nonce: BigInt(account.nonce),
