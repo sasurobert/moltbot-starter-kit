@@ -1,10 +1,12 @@
 import * as dotenv from "dotenv";
+import axios from "axios";
+import { UserSigner } from "@multiversx/sdk-wallet";
+import { promises as fs } from "fs";
+import * as path from "path";
 import { Facilitator } from "./facilitator";
 import { McpBridge } from "./mcp_bridge";
 import { Validator } from "./validator";
 import { JobProcessor } from "./processor";
-import { promises as fs } from "fs";
-import * as path from "path";
 import { CONFIG } from "./config";
 
 dotenv.config();
@@ -26,6 +28,27 @@ async function main() {
     const validator = new Validator();
     const facilitator = new Facilitator();
     const processor = new JobProcessor();
+
+    // 0. Fetch Relayer Address (Dynamic Shard Awareness)
+    try {
+        const walletPath = process.env.MULTIVERSX_PRIVATE_KEY || path.resolve("wallet.pem");
+        const walletContent = await fs.readFile(walletPath, "utf8");
+        const signer = UserSigner.fromPem(walletContent);
+        const myAddress = signer.getAddress().bech32();
+
+        console.log(`Fetching Relayer Address for ${myAddress} from ${CONFIG.PROVIDERS.RELAYER_URL}...`);
+        const relayerResp = await axios.get(`${CONFIG.PROVIDERS.RELAYER_URL}/relayer/address/${myAddress}`);
+        const relayerAddress = relayerResp.data?.relayerAddress;
+
+        if (relayerAddress) {
+            console.log(`Using Relayer: ${relayerAddress}`);
+            validator.setRelayerConfig(CONFIG.PROVIDERS.RELAYER_URL, relayerAddress);
+        } else {
+            console.warn("No relayer address returned, falling back to direct transactions.");
+        }
+    } catch (e: any) {
+        console.warn(`Failed to init relayer: ${e.message}. Using direct transactions.`);
+    }
 
     // Start Listener
     facilitator.onPayment(async (payment) => {
