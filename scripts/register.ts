@@ -157,7 +157,7 @@ async function main() {
 
             // Update Transaction with Relayer if available (Required for Relayed V3)
             if (relayerAddressBech32) {
-                tx.setRelayer(new Address(relayerAddressBech32));
+                tx.relayer = new Address(relayerAddressBech32);
                 // Re-sign because the content changed (relayer field is part of the signature)
                 const serializedRelayed = tx.serializeForSigning();
                 const signatureRelayed = await signer.sign(serializedRelayed);
