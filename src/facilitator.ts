@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {CONFIG} from './config';
+import { CONFIG } from './config';
 
 export interface PaymentEvent {
   amount: string;
@@ -51,5 +51,29 @@ export class Facilitator {
 
   async stop() {
     if (this.pollingInterval) clearInterval(this.pollingInterval);
+  }
+
+  async prepare(request: {
+    agentNonce: number;
+    serviceId: string;
+    employerAddress: string;
+    jobId?: string;
+  }) {
+    const res = await axios.post(`${this.facilitatorUrl}/prepare`, request);
+    return res.data;
+  }
+
+  async settle(payload: any) {
+    const res = await axios.post(`${this.facilitatorUrl}/settle`, {
+      scheme: 'exact',
+      payload,
+      requirements: {
+        payTo: payload.receiver,
+        amount: payload.value,
+        asset: 'EGLD',
+        network: 'D'
+      }
+    });
+    return res.data;
   }
 }

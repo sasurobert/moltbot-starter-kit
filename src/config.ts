@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 
 // Load .env from root
-dotenv.config({path: path.resolve(__dirname, '../.env')});
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 export const CONFIG = {
   // Network
@@ -59,5 +59,11 @@ export const CONFIG = {
       10,
     ), // Wait 10s before retrying check
     CHECK_INTERVAL: parseInt(process.env.RETRY_CHECK_INTERVAL || '2000', 10),
+  },
+
+  // Employer Settings (acting as hirer)
+  EMPLOYER: {
+    PEM_PATH: process.env.EMPLOYER_PEM_PATH || '',
+    ADDRESS: process.env.EMPLOYER_ADDRESS || '',
   },
 };
