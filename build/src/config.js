@@ -17,6 +17,8 @@ exports.CONFIG = {
             'erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu',
         VALIDATION_REGISTRY: process.env.VALIDATION_REGISTRY_ADDRESS ||
             'erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu',
+        REPUTATION_REGISTRY: process.env.REPUTATION_REGISTRY_ADDRESS ||
+            'erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu',
     },
     // External Services
     PROVIDERS: {

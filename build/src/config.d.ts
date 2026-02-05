@@ -5,6 +5,7 @@ export declare const CONFIG: {
     ADDRESSES: {
         IDENTITY_REGISTRY: string;
         VALIDATION_REGISTRY: string;
+        REPUTATION_REGISTRY: string;
     };
     PROVIDERS: {
         MCP_URL: string;

@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 
 // Load .env from root
-dotenv.config({path: path.resolve(__dirname, '../.env')});
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 export const CONFIG = {
   // Network
@@ -20,6 +20,9 @@ export const CONFIG = {
       'erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu',
     VALIDATION_REGISTRY:
       process.env.VALIDATION_REGISTRY_ADDRESS ||
+      'erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu',
+    REPUTATION_REGISTRY:
+      process.env.REPUTATION_REGISTRY_ADDRESS ||
       'erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu',
   },
 
