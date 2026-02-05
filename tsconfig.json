@@ -1,16 +1,11 @@
 {
-    "compilerOptions": {
-        "target": "ES2022",
-        "module": "commonjs",
-        "outDir": "./dist",
-        "rootDir": "./",
-        "strict": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true
-    },
-    "include": [
-        "src/**/*",
-        "scripts/**/*"
-    ]
+  "extends": "./node_modules/gts/tsconfig-google.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "build"
+  },
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts"
+  ]
 }
