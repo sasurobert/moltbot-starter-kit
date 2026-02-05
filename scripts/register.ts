@@ -13,6 +13,7 @@ dotenv.config();
 
 // Setup TransactionComputer for serialization
 const txComputer = new TransactionComputer();
+const RELAYED_V3_EXTRA_GAS = 50_000n;
 
 /**
  * Solve a Lib-based PoW Challenge for the Relayer
@@ -162,7 +163,8 @@ async function main() {
             // Update Transaction with Relayer if available (Required for Relayed V3)
             if (relayerAddressBech32) {
                 tx.relayer = new Address(relayerAddressBech32);
-                // Re-sign because the content changed (relayer field is part of the signature)
+                tx.gasLimit += RELAYED_V3_EXTRA_GAS;
+                // Re-sign because the content changed (relayer field and gasLimit are part of the signature)
                 const serializedRelayed = txComputer.computeBytesForSigning(tx);
                 const signatureRelayed = await signer.sign(serializedRelayed);
                 tx.signature = signatureRelayed;
