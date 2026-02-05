@@ -30,7 +30,7 @@ describe("JobProcessor", () => {
 
         const result = await processor.process({ payload: url, isUrl: true });
 
-        expect(axios.get).toHaveBeenCalledWith(url);
+        expect(axios.get).toHaveBeenCalledWith(url, expect.objectContaining({ timeout: expect.any(Number) }));
         expect(result).toBe(expectedHash);
     });
 

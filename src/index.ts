@@ -7,6 +7,7 @@ import { Facilitator } from "./facilitator";
 import { McpBridge } from "./mcp_bridge";
 import { Validator } from "./validator";
 import { JobProcessor } from "./processor";
+import { JobHandler } from "./job_handler";
 import { CONFIG } from "./config";
 
 dotenv.config();
@@ -28,6 +29,7 @@ async function main() {
     const validator = new Validator();
     const facilitator = new Facilitator();
     const processor = new JobProcessor();
+    const handler = new JobHandler(validator, processor);
 
     // 0. Fetch Relayer Address (Dynamic Shard Awareness)
     try {
@@ -37,7 +39,7 @@ async function main() {
         const myAddress = signer.getAddress().bech32();
 
         console.log(`Fetching Relayer Address for ${myAddress} from ${CONFIG.PROVIDERS.RELAYER_URL}...`);
-        const relayerResp = await axios.get(`${CONFIG.PROVIDERS.RELAYER_URL}/relayer/address/${myAddress}`);
+        const relayerResp = await axios.get(`${CONFIG.PROVIDERS.RELAYER_URL}/relayer/address/${myAddress}`, { timeout: CONFIG.REQUEST_TIMEOUT });
         const relayerAddress = relayerResp.data?.relayerAddress;
 
         if (relayerAddress) {
@@ -54,21 +56,10 @@ async function main() {
     facilitator.onPayment(async (payment) => {
         console.log(`[Job] Payment Received! Amount: ${payment.amount} ${payment.token}`);
 
-        // 1. Process Job
         const jobId = payment.meta?.jobId || `job-${Date.now()}`;
-        const payload = payment.meta?.payload || "";
-        console.log(`Processing Job ID: ${jobId}`);
 
-        try {
-            const resultHash = await processor.process({ payload: payload });
-            console.log(`Job Result Hash: ${resultHash}`);
-
-            // 2. Submit Proof
-            const txHash = await validator.submitProof(jobId, resultHash);
-            console.log(`[Job] Proof submitted. Tx: ${txHash}`);
-        } catch (err) {
-            console.error(`[Job] Failed to process ${jobId}:`, err);
-        }
+        // Fire-and-Forget Handler
+        handler.handle(jobId, payment);
     });
 
     await facilitator.start();

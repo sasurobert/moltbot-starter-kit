@@ -24,7 +24,7 @@ export class JobProcessor {
 
             try {
                 console.log(`Fetching job data from ${job.payload}...`);
-                const res = await axios.get(job.payload);
+                const res = await axios.get(job.payload, { timeout: CONFIG.REQUEST_TIMEOUT });
                 content = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
             } catch (e: any) {
                 // Propagate error if it's the domain check, otherwise logging warning approach for availability

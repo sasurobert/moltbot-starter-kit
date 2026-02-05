@@ -34,5 +34,15 @@ export const CONFIG = {
     SECURITY: {
         // Default allowed domains for fetching job payloads
         ALLOWED_DOMAINS: (process.env.ALLOWED_DOMAINS || "example.com,jsonplaceholder.typicode.com").split(",").map(d => d.trim())
+    },
+
+    // Timeouts
+    REQUEST_TIMEOUT: parseInt(process.env.REQUEST_TIMEOUT || "10000", 10),
+
+    // Retry Strategy
+    RETRY: {
+        MAX_ATTEMPTS: parseInt(process.env.RETRY_MAX_ATTEMPTS || "5", 10),
+        SUBMISSION_DELAY: parseInt(process.env.RETRY_SUBMISSION_DELAY || "10000", 10), // Wait 10s before retrying check
+        CHECK_INTERVAL: parseInt(process.env.RETRY_CHECK_INTERVAL || "2000", 10)
     }
 };
