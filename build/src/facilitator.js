@@ -38,6 +38,23 @@ class Facilitator {
         if (this.pollingInterval)
             clearInterval(this.pollingInterval);
     }
+    async prepare(request) {
+        const res = await axios_1.default.post(`${this.facilitatorUrl}/prepare`, request);
+        return res.data;
+    }
+    async settle(payload) {
+        const res = await axios_1.default.post(`${this.facilitatorUrl}/settle`, {
+            scheme: 'exact',
+            payload,
+            requirements: {
+                payTo: payload.receiver,
+                amount: payload.value,
+                asset: 'EGLD',
+                network: 'D',
+            },
+        });
+        return res.data;
+    }
 }
 exports.Facilitator = Facilitator;
 //# sourceMappingURL=facilitator.js.map

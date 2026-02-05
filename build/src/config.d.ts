@@ -25,4 +25,8 @@ export declare const CONFIG: {
         SUBMISSION_DELAY: number;
         CHECK_INTERVAL: number;
     };
+    EMPLOYER: {
+        PEM_PATH: string;
+        ADDRESS: string;
+    };
 };

@@ -16,5 +16,16 @@ export declare class Facilitator {
     onPayment(callback: PaymentCallback): void;
     start(): Promise<void>;
     stop(): Promise<void>;
+    prepare(request: {
+        agentNonce: number;
+        serviceId: string;
+        employerAddress: string;
+        jobId?: string;
+    }): Promise<any>;
+    settle(payload: {
+        receiver: string;
+        value: string;
+        [key: string]: unknown;
+    }): Promise<any>;
 }
 export {};

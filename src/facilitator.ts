@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { CONFIG } from './config';
+import {CONFIG} from './config';
 
 export interface PaymentEvent {
   amount: string;
@@ -63,7 +63,11 @@ export class Facilitator {
     return res.data;
   }
 
-  async settle(payload: any) {
+  async settle(payload: {
+    receiver: string;
+    value: string;
+    [key: string]: unknown;
+  }) {
     const res = await axios.post(`${this.facilitatorUrl}/settle`, {
       scheme: 'exact',
       payload,
@@ -71,8 +75,8 @@ export class Facilitator {
         payTo: payload.receiver,
         amount: payload.value,
         asset: 'EGLD',
-        network: 'D'
-      }
+        network: 'D',
+      },
     });
     return res.data;
   }

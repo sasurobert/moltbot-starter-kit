@@ -45,5 +45,10 @@ exports.CONFIG = {
         SUBMISSION_DELAY: parseInt(process.env.RETRY_SUBMISSION_DELAY || '10000', 10), // Wait 10s before retrying check
         CHECK_INTERVAL: parseInt(process.env.RETRY_CHECK_INTERVAL || '2000', 10),
     },
+    // Employer Settings (acting as hirer)
+    EMPLOYER: {
+        PEM_PATH: process.env.EMPLOYER_PEM_PATH || '',
+        ADDRESS: process.env.EMPLOYER_ADDRESS || '',
+    },
 };
 //# sourceMappingURL=config.js.map
