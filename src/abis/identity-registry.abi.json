@@ -1,0 +1,334 @@
+{
+  "buildInfo": {
+    "rustc": {
+      "version": "1.91.1",
+      "commitHash": "ed61e7d7e242494fb7057f2657300d9e77bb4fcb",
+      "commitDate": "2025-11-07",
+      "channel": "Stable",
+      "host": "aarch64-apple-darwin",
+      "short": "rustc 1.91.1 (ed61e7d7e 2025-11-07)",
+      "llvmVersion": "21.1"
+    },
+    "contractCrate": {
+      "name": "identity-registry",
+      "version": "0.1.0"
+    },
+    "framework": {
+      "name": "multiversx-sc",
+      "version": "0.64.1"
+    }
+  },
+  "name": "IdentityRegistry",
+  "constructor": {
+    "inputs": [],
+    "outputs": []
+  },
+  "upgradeConstructor": {
+    "inputs": [],
+    "outputs": []
+  },
+  "endpoints": [
+    {
+      "name": "issue_token",
+      "onlyOwner": true,
+      "mutability": "mutable",
+      "payableInTokens": ["EGLD"],
+      "inputs": [
+        {
+          "name": "token_display_name",
+          "type": "bytes"
+        },
+        {
+          "name": "token_ticker",
+          "type": "bytes"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "docs": [
+        "Register a new agent with name, URI, public key, and optional metadata entries.",
+        "",
+        "# Arguments",
+        "* `name` - Display name of the agent",
+        "* `uri` - URI pointing to the Agent Registration File (ARF) JSON",
+        "* `public_key` - Public key for signature verification",
+        "* `metadata` - Optional list of key-value metadata entries (EIP-8004 compatible)"
+      ],
+      "name": "register_agent",
+      "mutability": "mutable",
+      "inputs": [
+        {
+          "name": "name",
+          "type": "bytes"
+        },
+        {
+          "name": "uri",
+          "type": "bytes"
+        },
+        {
+          "name": "public_key",
+          "type": "bytes"
+        },
+        {
+          "name": "metadata",
+          "type": "optional<List<MetadataEntry>>",
+          "multi_arg": true
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "docs": [
+        "Update an agent's URI, public key, and optionally metadata.",
+        "Only the owner of the agent NFT can call this."
+      ],
+      "name": "update_agent",
+      "mutability": "mutable",
+      "inputs": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "new_uri",
+          "type": "bytes"
+        },
+        {
+          "name": "new_public_key",
+          "type": "bytes"
+        },
+        {
+          "name": "metadata",
+          "type": "optional<List<MetadataEntry>>",
+          "multi_arg": true
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "docs": [
+        "Set or update specific metadata entries for an agent.",
+        "This merges with existing metadata (upsert behavior)."
+      ],
+      "name": "set_metadata",
+      "mutability": "mutable",
+      "inputs": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "entries",
+          "type": "List<MetadataEntry>"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "docs": ["Get a specific metadata value by key for an agent."],
+      "name": "get_metadata",
+      "mutability": "readonly",
+      "inputs": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "key",
+          "type": "bytes"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "optional<bytes>",
+          "multi_result": true
+        }
+      ]
+    },
+    {
+      "name": "get_agent",
+      "mutability": "readonly",
+      "inputs": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "AgentDetails"
+        }
+      ]
+    },
+    {
+      "name": "get_agent_id",
+      "mutability": "readonly",
+      "inputs": [
+        {
+          "name": "address",
+          "type": "Address"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "get_agent_token_id",
+      "mutability": "readonly",
+      "inputs": [],
+      "outputs": [
+        {
+          "type": "TokenIdentifier"
+        }
+      ]
+    },
+    {
+      "name": "agent_token_nonce",
+      "mutability": "readonly",
+      "inputs": [],
+      "outputs": [
+        {
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "get_agent_owner",
+      "mutability": "readonly",
+      "inputs": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "Address"
+        }
+      ]
+    },
+    {
+      "name": "get_agent_service_price",
+      "mutability": "readonly",
+      "inputs": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "service_id",
+          "type": "bytes"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "BigUint"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "identifier": "agentRegistered",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "Address",
+          "indexed": true
+        },
+        {
+          "name": "nonce",
+          "type": "u64",
+          "indexed": true
+        },
+        {
+          "name": "data",
+          "type": "AgentRegisteredEventData"
+        }
+      ]
+    },
+    {
+      "identifier": "agentUpdated",
+      "inputs": [
+        {
+          "name": "nonce",
+          "type": "u64",
+          "indexed": true
+        },
+        {
+          "name": "uri",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "identifier": "metadataUpdated",
+      "inputs": [
+        {
+          "name": "nonce",
+          "type": "u64",
+          "indexed": true
+        }
+      ]
+    }
+  ],
+  "esdtAttributes": [],
+  "hasCallback": true,
+  "types": {
+    "AgentDetails": {
+      "type": "struct",
+      "fields": [
+        {
+          "name": "name",
+          "type": "bytes"
+        },
+        {
+          "name": "uri",
+          "type": "bytes"
+        },
+        {
+          "name": "public_key",
+          "type": "bytes"
+        },
+        {
+          "name": "owner",
+          "type": "Address"
+        },
+        {
+          "name": "metadata",
+          "type": "List<MetadataEntry>"
+        }
+      ]
+    },
+    "AgentRegisteredEventData": {
+      "type": "struct",
+      "fields": [
+        {
+          "name": "name",
+          "type": "bytes"
+        },
+        {
+          "name": "uri",
+          "type": "bytes"
+        }
+      ]
+    },
+    "MetadataEntry": {
+      "type": "struct",
+      "fields": [
+        {
+          "name": "key",
+          "type": "bytes"
+        },
+        {
+          "name": "value",
+          "type": "bytes"
+        }
+      ]
+    }
+  }
+}

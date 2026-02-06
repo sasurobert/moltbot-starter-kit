@@ -4,14 +4,19 @@ import {
   TransactionComputer,
   UserSigner,
   Query,
+  ArgSerializer,
   BytesValue,
-  U64Value,
+  AbiRegistry,
+  SmartContractTransactionsFactory,
+  TransactionsFactoryConfig,
+  NativeSerializer,
   BigUIntValue,
 } from '@multiversx/sdk-core';
 import {ApiNetworkProvider} from '@multiversx/sdk-network-providers';
 import {CONFIG} from './config';
 import {Facilitator} from './facilitator';
 import * as fs from 'fs';
+import * as path from 'path';
 
 async function runEmployerFlow() {
   console.log('--- Starting Employer Hiring Flow ---');
@@ -168,26 +173,30 @@ async function waitForJobVerification(
   const registry = Address.newFromBech32(CONFIG.ADDRESSES.VALIDATION_REGISTRY);
   const maxRetries = 60; // Wait up to 5 minutes (5s * 60)
 
+  const abiPath = path.join(
+    __dirname,
+    '../src/abis/validation-registry.abi.json',
+  );
+  const abi = AbiRegistry.create(JSON.parse(fs.readFileSync(abiPath, 'utf8')));
+
   for (let i = 0; i < maxRetries; i++) {
     process.stdout.write('.');
     try {
+      const serializer = new ArgSerializer();
       const query = new Query({
         address: registry,
         func: 'is_job_verified',
         args: [new BytesValue(Buffer.from(jobId))],
-      });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const response = await provider.queryContract(query as any);
+      }) as any;
+      const response = await provider.queryContract(query);
+      const values = serializer.buffersToValues(
+        response.getReturnDataParts(),
+        abi.getEndpoint('is_job_verified').output,
+      );
 
-      if (response.returnData && response.returnData.length > 0) {
-        const val = Buffer.from(response.returnData[0], 'base64').toString(
-          'hex',
-        );
-        // true is '01' or '1'
-        if (val === '01' || val === '1') {
-          console.log('\nJob Verification Confirmed!');
-          return;
-        }
+      if (values[0]?.valueOf() === true) {
+        console.log('\nJob Verification Confirmed!');
+        return;
       }
     } catch {
       // Ignore temporary query failures
@@ -206,40 +215,43 @@ async function submitReputation(
   signer: UserSigner,
   sender: string,
 ) {
-  // Contract: submit_feedback(job_id, agent_nonce, rating)
-  // We strictly need the agent nonce matching the job.
-  // In this script we know it is '1' (const agentNonce = 1 above).
-  // In a real app we'd fetch it from the JobData.
   const agentNonce = 1;
-
   const registry = Address.newFromBech32(CONFIG.ADDRESSES.REPUTATION_REGISTRY);
   const senderAddr = Address.newFromBech32(sender);
 
-  // Fetch Nonce
+  const abiPath = path.join(
+    __dirname,
+    '../src/abis/reputation-registry.abi.json',
+  );
+  const abi = AbiRegistry.create(JSON.parse(fs.readFileSync(abiPath, 'utf8')));
+
   const account = await provider.getAccount({bech32: () => sender});
 
-  const tx = new Transaction({
-    nonce: BigInt(account.nonce),
-    receiver: registry,
-    gasLimit: 10_000_000n,
-    chainID: CONFIG.CHAIN_ID,
-    value: 0n,
-    sender: senderAddr,
-    data: Buffer.from(
-      `submit_feedback@${Buffer.from(jobId).toString('hex')}@${new U64Value(agentNonce).toString()}@${new BigUIntValue(BigInt(rating)).toString()}`,
-    ),
+  const factory = new SmartContractTransactionsFactory({
+    abi,
+    config: new TransactionsFactoryConfig({chainID: CONFIG.CHAIN_ID}),
   });
 
+  const endpoint = abi.getEndpoint('submit_feedback');
+  const typedArgs = NativeSerializer.nativeToTypedValues(
+    [Buffer.from(jobId), BigInt(agentNonce), new BigUIntValue(BigInt(rating))],
+    endpoint,
+  );
+
+  const tx = await factory.createTransactionForExecute(senderAddr, {
+    contract: registry,
+    function: 'submit_feedback',
+    arguments: typedArgs,
+    gasLimit: 10_000_000n,
+  });
+
+  tx.nonce = BigInt(account.nonce);
   const computer = new TransactionComputer();
-  const bytesToSign = computer.computeBytesForSigning(tx);
-  tx.signature = await signer.sign(bytesToSign);
+  tx.signature = await signer.sign(computer.computeBytesForSigning(tx));
 
   console.log('Broadcasting feedback tx...');
   const txHash = await provider.sendTransaction(tx);
   console.log(`Feedback Tx: ${txHash}`);
-
-  // Optional: Monitor feedback tx
-  // For brevity/script, we just log it.
 }
 
 if (require.main === module) {

@@ -21,20 +21,20 @@ sequenceDiagram
 
     Bot->>Relayer: POST /relay (submitProof)
     Relayer-->>Bot: 403 Unauthorized (Agent not registered)
-    
+
     Note over Bot: Auto-Registration Triggered
-    
+
     Bot->>Relayer: POST /challenge
     Relayer-->>Bot: 200 OK { difficulty, salt, ... }
-    
+
     Bot->>Bot: Solve PoW (Find Nonce)
-    
+
     Bot->>Relayer: POST /relay (register_agent + nonce)
     Relayer->>Relayer: Verify Nonce & Difficulty
     Relayer->>Chain: Broadcast (Gasless V3)
-    
+
     Note over Chain: Agent Registered!
-    
+
     Bot->>Relayer: POST /relay (submitProof) (Retry)
     Relayer->>Relayer: Verify On-Chain Registry
     Relayer->>Chain: Broadcast
