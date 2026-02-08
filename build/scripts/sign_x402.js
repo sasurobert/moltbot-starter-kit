@@ -23,10 +23,10 @@ async function main() {
         receiver: new sdk_core_1.Address(receiver),
         sender: new sdk_core_1.Address(sender.bech32()),
         gasPrice: 1000000000n, // Facilitator uses default/inherited? Settler says: BigInt(payload.gasPrice)
-        gasLimit: 50000n, // Standard transfer
+        gasLimit: 500000n, // Standard transfer
         data: dataStr ? Buffer.from(dataStr) : undefined,
         chainID: chainID,
-        version: 2, // Settler uses payload.version or 2
+        version: 1, // Settler uses payload.version or 2
     });
     // 3. Sign
     const computer = new sdk_core_1.TransactionComputer();
@@ -43,9 +43,10 @@ async function main() {
         data: dataStr,
         signature: signature.toString('hex'),
         chainID: chainID,
-        version: 2,
+        version: 1,
+        options: 0,
         gasPrice: 1000000000,
-        gasLimit: 50000,
+        gasLimit: 500000,
         validBefore: Math.floor(Date.now() / 1000) + 3600, // 1 hour
     };
     console.log(JSON.stringify(payload));

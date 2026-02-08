@@ -1,6 +1,6 @@
-import { UserSigner } from '@multiversx/sdk-wallet';
-import { Transaction, Address, TransactionComputer } from '@multiversx/sdk-core';
-import { promises as fs } from 'fs';
+import {UserSigner} from '@multiversx/sdk-wallet';
+import {Transaction, Address, TransactionComputer} from '@multiversx/sdk-core';
+import {promises as fs} from 'fs';
 
 // Usage: ts-node sign_x402.ts <pemPath> <receiver> <value> <nonce> <chainID> [data]
 
