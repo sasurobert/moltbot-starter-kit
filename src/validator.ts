@@ -1,4 +1,4 @@
-import {UserSigner} from '@multiversx/sdk-wallet';
+import { UserSigner } from '@multiversx/sdk-wallet';
 import {
   Address,
   TransactionComputer,
@@ -6,15 +6,15 @@ import {
   DevnetEntrypoint,
   VariadicValue,
 } from '@multiversx/sdk-core';
-import {ApiNetworkProvider} from '@multiversx/sdk-network-providers';
+import { ApiNetworkProvider } from '@multiversx/sdk-network-providers';
 import axios from 'axios';
-import {promises as fs} from 'fs';
+import { promises as fs } from 'fs';
 import * as path from 'path';
-import {CONFIG} from './config';
+import { CONFIG } from './config';
 import * as identityAbiJson from './abis/identity-registry.abi.json';
 import * as validationAbiJson from './abis/validation-registry.abi.json';
-import {Logger} from './utils/logger';
-import {PoWSolver} from './pow';
+import { Logger } from './utils/logger';
+import { PoWSolver } from './pow';
 
 export class Validator {
   private logger = new Logger('Validator');
@@ -43,13 +43,16 @@ export class Validator {
 
     // 2. Fetch Account State (Nonce) with Timeout
     const account = await this.withTimeout(
-      provider.getAccount({bech32: () => senderAddress.toBech32()}),
+      provider.getAccount({ bech32: () => senderAddress.toBech32() }),
       'Fetching Account',
     );
 
     // 3. Construct Transaction using ABI Factory
-    const entrypoint = new DevnetEntrypoint({url: CONFIG.API_URL});
-    const validationAbi = Abi.create(validationAbiJson);
+    const entrypoint = new DevnetEntrypoint({ url: CONFIG.API_URL });
+    const rawValAbi = JSON.stringify(validationAbiJson)
+      .replace(/"TokenId"/g, '"TokenIdentifier"')
+      .replace(/"NonZeroBigUint"/g, '"BigUint"');
+    const validationAbi = Abi.create(JSON.parse(rawValAbi));
     const factory =
       entrypoint.createSmartContractTransactionsFactory(validationAbi);
 
@@ -90,8 +93,8 @@ export class Validator {
           this.logger.info(`Sending to Relayer Service: ${this.relayerUrl}`);
           const relayRes = await axios.post(
             `${this.relayerUrl}/relay`,
-            {transaction: tx.toPlainObject()},
-            {timeout: CONFIG.REQUEST_TIMEOUT},
+            { transaction: tx.toPlainObject() },
+            { timeout: CONFIG.REQUEST_TIMEOUT },
           );
           txHash = relayRes.data.txHash;
         } else {
@@ -106,7 +109,7 @@ export class Validator {
         return txHash;
       } catch (e: unknown) {
         const err = e as {
-          response?: {data?: {error?: string}; status?: number};
+          response?: { data?: { error?: string }; status?: number };
           message?: string;
         };
         const msg = err.response?.data?.error || err.message;
@@ -173,8 +176,11 @@ export class Validator {
     });
 
     // 3. Create Registration Tx using ABI Factory
-    const entrypoint = new DevnetEntrypoint({url: CONFIG.API_URL});
-    const identityAbi = Abi.create(identityAbiJson);
+    const entrypoint = new DevnetEntrypoint({ url: CONFIG.API_URL });
+    const rawIdAbi = JSON.stringify(identityAbiJson)
+      .replace(/"TokenId"/g, '"TokenIdentifier"')
+      .replace(/"NonZeroBigUint"/g, '"BigUint"');
+    const identityAbi = Abi.create(JSON.parse(rawIdAbi));
     const factory =
       entrypoint.createSmartContractTransactionsFactory(identityAbi);
 
@@ -241,7 +247,7 @@ export class Validator {
       );
       return tx.status.toString().toLowerCase();
     } catch (e: unknown) {
-      const err = e as {response?: {status?: number}; message?: string};
+      const err = e as { response?: { status?: number }; message?: string };
       // Handle 404 as 'not_found'
       if (err.response?.status === 404 || err.message?.includes('404')) {
         return 'not_found';

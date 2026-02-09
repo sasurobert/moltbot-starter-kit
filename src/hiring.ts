@@ -6,12 +6,12 @@ import {
   Abi,
   DevnetEntrypoint,
 } from '@multiversx/sdk-core';
-import {ApiNetworkProvider} from '@multiversx/sdk-network-providers';
-import {CONFIG} from './config';
-import {Facilitator} from './facilitator';
+import { ApiNetworkProvider } from '@multiversx/sdk-network-providers';
+import { CONFIG } from './config';
+import { Facilitator } from './facilitator';
 import * as fs from 'fs';
 import * as path from 'path';
-import {Logger} from './utils/logger';
+import { Logger } from './utils/logger';
 
 const logger = new Logger('HiringScript');
 
@@ -55,7 +55,7 @@ async function runEmployerFlow() {
       logger.info(`--- Settlement Attempt ${attempt} ---`);
 
       // 1. Fetch Fresh Nonce
-      const account = await provider.getAccount({bech32: () => employerAddr});
+      const account = await provider.getAccount({ bech32: () => employerAddr });
       logger.info(`Fetched Sender Nonce: ${account.nonce}`);
 
       // 2. Construct Transaction
@@ -170,8 +170,11 @@ async function waitForJobVerification(jobId: string) {
     __dirname,
     '../src/abis/validation-registry.abi.json',
   );
-  const entrypoint = new DevnetEntrypoint({url: CONFIG.API_URL});
-  const abi = Abi.create(JSON.parse(fs.readFileSync(abiPath, 'utf8')));
+  const entrypoint = new DevnetEntrypoint({ url: CONFIG.API_URL });
+  const rawAbi = fs.readFileSync(abiPath, 'utf8')
+    .replace(/"TokenId"/g, '"TokenIdentifier"')
+    .replace(/"NonZeroBigUint"/g, '"BigUint"');
+  const abi = Abi.create(JSON.parse(rawAbi));
   const controller = entrypoint.createSmartContractController(abi);
 
   for (let i = 0; i < maxRetries; i++) {
@@ -213,11 +216,14 @@ async function submitReputation(
     __dirname,
     '../src/abis/reputation-registry.abi.json',
   );
-  const abi = Abi.create(JSON.parse(fs.readFileSync(abiPath, 'utf8')));
+  const rawRepAbi = fs.readFileSync(abiPath, 'utf8')
+    .replace(/"TokenId"/g, '"TokenIdentifier"')
+    .replace(/"NonZeroBigUint"/g, '"BigUint"');
+  const abi = Abi.create(JSON.parse(rawRepAbi));
 
-  const account = await provider.getAccount({bech32: () => sender});
+  const account = await provider.getAccount({ bech32: () => sender });
 
-  const entrypoint = new DevnetEntrypoint({url: CONFIG.API_URL});
+  const entrypoint = new DevnetEntrypoint({ url: CONFIG.API_URL });
   const factory = entrypoint.createSmartContractTransactionsFactory(abi);
 
   const tx = await factory.createTransactionForExecute(senderAddr, {
