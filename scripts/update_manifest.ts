@@ -1,4 +1,4 @@
-import {UserSigner} from '@multiversx/sdk-wallet';
+import { UserSigner } from '@multiversx/sdk-wallet';
 import {
   Address,
   TransactionComputer,
@@ -19,10 +19,10 @@ import {
   ApiNetworkProvider,
   ProxyNetworkProvider,
 } from '@multiversx/sdk-network-providers';
-import {promises as fs} from 'fs';
+import { promises as fs } from 'fs';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
-import {CONFIG} from '../src/config';
+import { CONFIG } from '../src/config';
 
 dotenv.config();
 
@@ -63,7 +63,7 @@ async function main() {
     capabilities: string[];
     nonce: number;
     manifestUri: string;
-    metadata: Array<{key: string; value: string}>;
+    metadata: Array<{ key: string; value: string }>;
   } = JSON.parse(await fs.readFile(configPath, 'utf8'));
 
   console.log(`Updating Agent: ${config.agentName}`);
@@ -87,7 +87,10 @@ async function main() {
 
   // 4. Load ABI and build transaction using SmartContractTransactionsFactory
   const abiPath = path.resolve(__dirname, '..', 'identity-registry.abi.json');
-  const abiJson = JSON.parse(await fs.readFile(abiPath, 'utf8'));
+  const rawAbiStr = (await fs.readFile(abiPath, 'utf8'))
+    .replace(/"TokenId"/g, '"TokenIdentifier"')
+    .replace(/"NonZeroBigUint"/g, '"BigUint"');
+  const abiJson = JSON.parse(rawAbiStr);
   const abi = Abi.create(abiJson);
 
   const factoryConfig = new TransactionsFactoryConfig({
@@ -135,7 +138,7 @@ async function main() {
   let tokenId = '';
   try {
     const queryResponse = await provider.queryContract({
-      address: {bech32: () => registryAddress},
+      address: { bech32: () => registryAddress },
       func: 'getAgentTokenId',
       getEncodedArguments: () => [],
     });
@@ -165,7 +168,7 @@ async function main() {
     gasLimit: BigInt(CONFIG.GAS_LIMITS.REGISTER),
     tokenTransfers: [
       new TokenTransfer({
-        token: new Token({identifier: tokenId, nonce: BigInt(config.nonce)}),
+        token: new Token({ identifier: tokenId, nonce: BigInt(config.nonce) }),
         amount: 1n,
       }),
     ],

@@ -20,6 +20,9 @@ jest.mock('@multiversx/sdk-core', () => {
         Abi: {
             create: jest.fn().mockReturnValue({}),
         },
+        VariadicValue: {
+            fromItemsCounted: jest.fn().mockReturnValue([]),
+        },
         DevnetEntrypoint: jest.fn().mockImplementation(() => ({
             createSmartContractTransactionsFactory: jest.fn().mockReturnValue({
                 createTransactionForExecute: jest.fn().mockResolvedValue({

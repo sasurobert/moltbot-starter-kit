@@ -127,6 +127,18 @@
     "erd1f6zq77wj66kmgjcrmzkvnq7p8xzrfs9gpyjtkanhmv77e9vkmk3qdp0k6d": {
       "relayerAddress": "erd12rv8wzvf6w2xsmfy6nyquyqxkh2z6yzr6q8d4unguyvqmy743dpqc3uqjj",
       "timestamp": 1770641479730
+    },
+    "erd1lc4gu0u7agsmyj9gcyt2c0afsf4e802mfrsx60whunkht0j24j6smeyldr": {
+      "relayerAddress": "erd12waf470a6hutr42p894z3ltak47fh8usxu54wcuah0cmcun4n0ksd5vprj",
+      "timestamp": 1770655075534
+    },
+    "erd1sr2al8prp4duhdx36zr9j7sfphljwuazyxnwflm0dmf2jtv94grs0t9nqn": {
+      "relayerAddress": "erd1kf5temamecl3lpl8j3srwu0g6lsexnpqykgqzp8vrs3xkqgjtxls4vju8n",
+      "timestamp": 1770655401609
+    },
+    "erd1fq836qar0p7tjvhf5aklkuta3ug02lpwcf8d3gzeyha9pmpj2k2slca85n": {
+      "relayerAddress": "erd1m8knuevpse645n0g79h7pl0jak6pqshcfdrd3u7605qfp734f4gsvg675k",
+      "timestamp": 1770655655940
     }
   }
 }

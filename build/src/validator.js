@@ -72,7 +72,10 @@ class Validator {
         const account = await this.withTimeout(provider.getAccount({ bech32: () => senderAddress.toBech32() }), 'Fetching Account');
         // 3. Construct Transaction using ABI Factory
         const entrypoint = new sdk_core_1.DevnetEntrypoint({ url: config_1.CONFIG.API_URL });
-        const validationAbi = sdk_core_1.Abi.create(validationAbiJson);
+        const rawValAbi = JSON.stringify(validationAbiJson)
+            .replace(/"TokenId"/g, '"TokenIdentifier"')
+            .replace(/"NonZeroBigUint"/g, '"BigUint"');
+        const validationAbi = sdk_core_1.Abi.create(JSON.parse(rawValAbi));
         const factory = entrypoint.createSmartContractTransactionsFactory(validationAbi);
         const receiver = new sdk_core_1.Address(config_1.CONFIG.ADDRESSES.VALIDATION_REGISTRY);
         const tx = await factory.createTransactionForExecute(senderAddress, {
@@ -166,7 +169,10 @@ class Validator {
         });
         // 3. Create Registration Tx using ABI Factory
         const entrypoint = new sdk_core_1.DevnetEntrypoint({ url: config_1.CONFIG.API_URL });
-        const identityAbi = sdk_core_1.Abi.create(identityAbiJson);
+        const rawIdAbi = JSON.stringify(identityAbiJson)
+            .replace(/"TokenId"/g, '"TokenIdentifier"')
+            .replace(/"NonZeroBigUint"/g, '"BigUint"');
+        const identityAbi = sdk_core_1.Abi.create(JSON.parse(rawIdAbi));
         const factory = entrypoint.createSmartContractTransactionsFactory(identityAbi);
         const tx = await factory.createTransactionForExecute(senderAddress, {
             contract: new sdk_core_1.Address(config_1.CONFIG.ADDRESSES.IDENTITY_REGISTRY),

@@ -174,7 +174,11 @@ async function waitForJobVerification(jobId) {
     const maxRetries = 60; // Wait up to 5 minutes (5s * 60)
     const abiPath = path.join(__dirname, '../src/abis/validation-registry.abi.json');
     const entrypoint = new sdk_core_1.DevnetEntrypoint({ url: config_1.CONFIG.API_URL });
-    const abi = sdk_core_1.Abi.create(JSON.parse(fs.readFileSync(abiPath, 'utf8')));
+    const rawAbi = fs
+        .readFileSync(abiPath, 'utf8')
+        .replace(/"TokenId"/g, '"TokenIdentifier"')
+        .replace(/"NonZeroBigUint"/g, '"BigUint"');
+    const abi = sdk_core_1.Abi.create(JSON.parse(rawAbi));
     const controller = entrypoint.createSmartContractController(abi);
     for (let i = 0; i < maxRetries; i++) {
         process.stdout.write('.');
@@ -202,7 +206,11 @@ async function submitReputation(jobId, rating, provider, signer, sender) {
     const registry = sdk_core_1.Address.newFromBech32(config_1.CONFIG.ADDRESSES.REPUTATION_REGISTRY);
     const senderAddr = sdk_core_1.Address.newFromBech32(sender);
     const abiPath = path.join(__dirname, '../src/abis/reputation-registry.abi.json');
-    const abi = sdk_core_1.Abi.create(JSON.parse(fs.readFileSync(abiPath, 'utf8')));
+    const rawRepAbi = fs
+        .readFileSync(abiPath, 'utf8')
+        .replace(/"TokenId"/g, '"TokenIdentifier"')
+        .replace(/"NonZeroBigUint"/g, '"BigUint"');
+    const abi = sdk_core_1.Abi.create(JSON.parse(rawRepAbi));
     const account = await provider.getAccount({ bech32: () => sender });
     const entrypoint = new sdk_core_1.DevnetEntrypoint({ url: config_1.CONFIG.API_URL });
     const factory = entrypoint.createSmartContractTransactionsFactory(abi);

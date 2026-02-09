@@ -123,7 +123,10 @@ async function main() {
     });
     // Load the identity-registry ABI for proper argument encoding
     const abiPath = path.resolve(__dirname, '..', 'identity-registry.abi.json');
-    const abiJson = JSON.parse(await fs_1.promises.readFile(abiPath, 'utf8'));
+    const rawAbiStr = (await fs_1.promises.readFile(abiPath, 'utf8'))
+        .replace(/"TokenId"/g, '"TokenIdentifier"')
+        .replace(/"NonZeroBigUint"/g, '"BigUint"');
+    const abiJson = JSON.parse(rawAbiStr);
     const abi = sdk_core_1.Abi.create(abiJson);
     const factoryConfig = new sdk_core_1.TransactionsFactoryConfig({
         chainID: config_1.CONFIG.CHAIN_ID,
