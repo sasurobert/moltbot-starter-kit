@@ -1,5 +1,14 @@
 {
     "buildInfo": {
+        "rustc": {
+            "version": "1.91.1",
+            "commitHash": "ed61e7d7e242494fb7057f2657300d9e77bb4fcb",
+            "commitDate": "2025-11-07",
+            "channel": "Stable",
+            "host": "aarch64-apple-darwin",
+            "short": "rustc 1.91.1 (ed61e7d7e 2025-11-07)",
+            "llvmVersion": "21.1"
+        },
         "contractCrate": {
             "name": "identity-registry",
             "version": "0.1.0"
@@ -40,13 +49,7 @@
         },
         {
             "docs": [
-                "Register a new agent with name, URI, public key, and optional metadata entries.",
-                "",
-                "# Arguments",
-                "* `name` - Display name of the agent",
-                "* `uri` - URI pointing to the Agent Registration File (ARF) JSON",
-                "* `public_key` - Public key for signature verification",
-                "* `metadata` - Optional list of key-value metadata entries (EIP-8004 compatible)"
+                "Register a new agent with name, URI, public key, optional metadata, and optional service configs."
             ],
             "name": "register_agent",
             "mutability": "mutable",
@@ -65,17 +68,21 @@
                 },
                 {
                     "name": "metadata",
-                    "type": "optional<List<MetadataEntry>>",
+                    "type": "counted-variadic<MetadataEntry>",
+                    "multi_arg": true
+                },
+                {
+                    "name": "services",
+                    "type": "counted-variadic<ServiceConfigInput>",
                     "multi_arg": true
                 }
             ],
-            "outputs": []
+            "outputs": [],
+            "allow_multiple_var_args": true
         },
         {
             "docs": [
-                "Update an agent's URI, public_key, and optionally metadata.",
-                "This follows the Transfer-Execute pattern: the owner sends the agent NFT to this endpoint.",
-                "The nonce is automatically extracted from the payment."
+                "Update an agent's URI and/or public_key. Requires sending the agent NFT."
             ],
             "name": "update_agent",
             "mutability": "mutable",
@@ -83,6 +90,10 @@
                 "*"
             ],
             "inputs": [
+                {
+                    "name": "new_name",
+                    "type": "bytes"
+                },
                 {
                     "name": "new_uri",
                     "type": "bytes"
@@ -93,7 +104,12 @@
                 },
                 {
                     "name": "metadata",
-                    "type": "optional<List<MetadataEntry>>",
+                    "type": "optional<counted-variadic<MetadataEntry>>",
+                    "multi_arg": true
+                },
+                {
+                    "name": "services",
+                    "type": "optional<counted-variadic<ServiceConfigInput>>",
                     "multi_arg": true
                 }
             ],
@@ -102,8 +118,7 @@
         },
         {
             "docs": [
-                "Set or update specific metadata entries for an agent.",
-                "This merges with existing metadata (upsert behavior)."
+                "Set or update metadata entries for an agent. O(1) per entry via MapMapper."
             ],
             "name": "set_metadata",
             "mutability": "mutable",
@@ -114,15 +129,168 @@
                 },
                 {
                     "name": "entries",
-                    "type": "List<MetadataEntry>"
+                    "type": "counted-variadic<MetadataEntry>",
+                    "multi_arg": true
                 }
             ],
             "outputs": []
         },
         {
             "docs": [
-                "Get a specific metadata value by key for an agent."
+                "Set or update service configurations for an agent."
             ],
+            "name": "set_service_configs",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "configs",
+                    "type": "counted-variadic<ServiceConfigInput>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Remove metadata entries by key."
+            ],
+            "name": "remove_metadata",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "keys",
+                    "type": "variadic<bytes>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Remove service configurations by service ID."
+            ],
+            "name": "remove_service_configs",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "service_ids",
+                    "type": "variadic<u32>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "get_agent_token_id",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "TokenIdentifier"
+                }
+            ]
+        },
+        {
+            "name": "get_agent_id",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<multi<u64,Address>>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "get_agent_details",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "nonce",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "AgentDetails"
+                }
+            ]
+        },
+        {
+            "name": "get_agent_metadata",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "nonce",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<multi<bytes,bytes>>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "get_agent_service",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "nonce",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<multi<u32,Payment>>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "get_agent",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "nonce",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "AgentDetails"
+                }
+            ]
+        },
+        {
+            "name": "get_agent_owner",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "nonce",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Address"
+                }
+            ]
+        },
+        {
             "name": "get_metadata",
             "mutability": "readonly",
             "inputs": [
@@ -143,9 +311,6 @@
             ]
         },
         {
-            "docs": [
-                "Get the complete payment configuration for a specific agent service in one call."
-            ],
             "name": "get_agent_service_config",
             "mutability": "readonly",
             "inputs": [
@@ -155,134 +320,13 @@
                 },
                 {
                     "name": "service_id",
-                    "type": "bytes"
+                    "type": "u32"
                 }
             ],
             "outputs": [
                 {
-                    "type": "AgentServiceConfig"
-                }
-            ]
-        },
-        {
-            "name": "get_agent",
-            "mutability": "readonly",
-            "inputs": [
-                {
-                    "name": "nonce",
-                    "type": "u64"
-                }
-            ],
-            "outputs": [
-                {
-                    "type": "AgentDetails"
-                }
-            ]
-        },
-        {
-            "name": "get_agent_id",
-            "mutability": "readonly",
-            "inputs": [
-                {
-                    "name": "address",
-                    "type": "Address"
-                }
-            ],
-            "outputs": [
-                {
-                    "type": "u64"
-                }
-            ]
-        },
-        {
-            "name": "get_agent_token_id",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
-                {
-                    "type": "TokenIdentifier"
-                }
-            ]
-        },
-        {
-            "name": "agent_token_nonce",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
-                {
-                    "type": "u64"
-                }
-            ]
-        },
-        {
-            "name": "get_agent_owner",
-            "mutability": "readonly",
-            "inputs": [
-                {
-                    "name": "nonce",
-                    "type": "u64"
-                }
-            ],
-            "outputs": [
-                {
-                    "type": "Address"
-                }
-            ]
-        },
-        {
-            "name": "get_agent_service_price",
-            "mutability": "readonly",
-            "inputs": [
-                {
-                    "name": "nonce",
-                    "type": "u64"
-                },
-                {
-                    "name": "service_id",
-                    "type": "bytes"
-                }
-            ],
-            "outputs": [
-                {
-                    "type": "BigUint"
-                }
-            ]
-        },
-        {
-            "name": "get_agent_service_payment_token",
-            "mutability": "readonly",
-            "inputs": [
-                {
-                    "name": "nonce",
-                    "type": "u64"
-                },
-                {
-                    "name": "service_id",
-                    "type": "bytes"
-                }
-            ],
-            "outputs": [
-                {
-                    "type": "EgldOrEsdtTokenIdentifier"
-                }
-            ]
-        },
-        {
-            "name": "get_agent_service_payment_nonce",
-            "mutability": "readonly",
-            "inputs": [
-                {
-                    "name": "nonce",
-                    "type": "u64"
-                },
-                {
-                    "name": "service_id",
-                    "type": "bytes"
-                }
-            ],
-            "outputs": [
-                {
-                    "type": "u64"
+                    "type": "optional<EgldOrEsdtTokenPayment>",
+                    "multi_result": true
                 }
             ]
         }
@@ -314,15 +358,21 @@
                     "name": "nonce",
                     "type": "u64",
                     "indexed": true
-                },
-                {
-                    "name": "uri",
-                    "type": "bytes"
                 }
             ]
         },
         {
             "identifier": "metadataUpdated",
+            "inputs": [
+                {
+                    "name": "nonce",
+                    "type": "u64",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "serviceConfigsUpdated",
             "inputs": [
                 {
                     "name": "nonce",
@@ -343,20 +393,8 @@
                     "type": "bytes"
                 },
                 {
-                    "name": "uri",
-                    "type": "bytes"
-                },
-                {
                     "name": "public_key",
                     "type": "bytes"
-                },
-                {
-                    "name": "owner",
-                    "type": "Address"
-                },
-                {
-                    "name": "metadata",
-                    "type": "List<MetadataEntry>"
                 }
             ]
         },
@@ -373,19 +411,19 @@
                 }
             ]
         },
-        "AgentServiceConfig": {
+        "EgldOrEsdtTokenPayment": {
             "type": "struct",
             "fields": [
                 {
-                    "name": "token",
+                    "name": "token_identifier",
                     "type": "EgldOrEsdtTokenIdentifier"
                 },
                 {
-                    "name": "pnonce",
+                    "name": "token_nonce",
                     "type": "u64"
                 },
                 {
-                    "name": "price",
+                    "name": "amount",
                     "type": "BigUint"
                 }
             ]
@@ -400,6 +438,44 @@
                 {
                     "name": "value",
                     "type": "bytes"
+                }
+            ]
+        },
+        "Payment": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "token_identifier",
+                    "type": "TokenId"
+                },
+                {
+                    "name": "token_nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "amount",
+                    "type": "NonZeroBigUint"
+                }
+            ]
+        },
+        "ServiceConfigInput": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "service_id",
+                    "type": "u32"
+                },
+                {
+                    "name": "price",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "token",
+                    "type": "TokenId"
+                },
+                {
+                    "name": "nonce",
+                    "type": "u64"
                 }
             ]
         }

@@ -1,5 +1,14 @@
 {
     "buildInfo": {
+        "rustc": {
+            "version": "1.91.1",
+            "commitHash": "ed61e7d7e242494fb7057f2657300d9e77bb4fcb",
+            "commitDate": "2025-11-07",
+            "channel": "Stable",
+            "host": "aarch64-apple-darwin",
+            "short": "rustc 1.91.1 (ed61e7d7e 2025-11-07)",
+            "llvmVersion": "21.1"
+        },
         "contractCrate": {
             "name": "validation-registry",
             "version": "0.1.0"
@@ -25,38 +34,7 @@
     },
     "endpoints": [
         {
-            "name": "set_identity_registry_address",
-            "onlyOwner": true,
-            "mutability": "mutable",
-            "inputs": [
-                {
-                    "name": "address",
-                    "type": "Address"
-                }
-            ],
-            "outputs": []
-        },
-        {
             "name": "init_job",
-            "mutability": "mutable",
-            "inputs": [
-                {
-                    "name": "job_id",
-                    "type": "bytes"
-                },
-                {
-                    "name": "agent_nonce",
-                    "type": "u64"
-                }
-            ],
-            "outputs": []
-        },
-        {
-            "docs": [
-                "Optimized job initialization with payment.",
-                "Uses direct storage reads from IdentityRegistry for maximum performance."
-            ],
-            "name": "init_job_with_payment",
             "mutability": "mutable",
             "payableInTokens": [
                 "*"
@@ -72,7 +50,8 @@
                 },
                 {
                     "name": "service_id",
-                    "type": "bytes"
+                    "type": "optional<u32>",
+                    "multi_arg": true
                 }
             ],
             "outputs": []
@@ -146,6 +125,18 @@
                     "multi_result": true
                 }
             ]
+        },
+        {
+            "name": "set_identity_registry_address",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
         }
     ],
     "events": [

@@ -176,7 +176,8 @@ class Validator {
                 Buffer.from(config_1.CONFIG.AGENT.NAME),
                 Buffer.from(config_1.CONFIG.AGENT.URI),
                 Buffer.from(senderAddress.getPublicKey()),
-                [],
+                sdk_core_1.VariadicValue.fromItemsCounted(), // metadata (empty)
+                sdk_core_1.VariadicValue.fromItemsCounted(), // services (empty)
             ],
         });
         tx.nonce = BigInt(account.nonce);

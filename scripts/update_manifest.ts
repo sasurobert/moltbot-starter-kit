@@ -1,20 +1,47 @@
 import {UserSigner} from '@multiversx/sdk-wallet';
-import {Transaction, Address, TransactionComputer} from '@multiversx/sdk-core';
-import {ApiNetworkProvider} from '@multiversx/sdk-network-providers';
+import {
+  Address,
+  TransactionComputer,
+  SmartContractTransactionsFactory,
+  TransactionsFactoryConfig,
+  Abi,
+  VariadicValue,
+  Struct,
+  BytesValue,
+  Field,
+  StructType,
+  FieldDefinition,
+  BytesType,
+  TokenTransfer,
+  Token,
+} from '@multiversx/sdk-core';
+import {
+  ApiNetworkProvider,
+  ProxyNetworkProvider,
+} from '@multiversx/sdk-network-providers';
 import {promises as fs} from 'fs';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import {CONFIG} from '../src/config';
 
 dotenv.config();
 
+const txComputer = new TransactionComputer();
+
 async function main() {
   console.log('🚀 Starting Manifest Update...');
-  const txComputer = new TransactionComputer();
 
   // 1. Setup Provider & Signer
-  const providerUrl =
-    process.env.MULTIVERSX_API_URL || 'https://devnet-api.multiversx.com';
-  const provider = new ApiNetworkProvider(providerUrl);
+  const providerUrl = process.env.MULTIVERSX_API_URL || CONFIG.API_URL;
+  const isLocal =
+    providerUrl.includes('localhost') || providerUrl.includes('127.0.0.1');
+  const provider = isLocal
+    ? new ProxyNetworkProvider(providerUrl)
+    : new ApiNetworkProvider(providerUrl);
+
+  console.log(
+    `Using Provider: ${isLocal ? 'ProxyNetworkProvider' : 'ApiNetworkProvider'} (${providerUrl})`,
+  );
 
   const pemPath =
     process.env.MULTIVERSX_PRIVATE_KEY || path.resolve('wallet.pem');
@@ -29,7 +56,7 @@ async function main() {
   const signer = UserSigner.fromPem(pemContent);
   const senderAddress = new Address(signer.getAddress().bech32());
 
-  // 2. Load Config to get new details
+  // 2. Load Config
   const configPath = path.resolve('config.json');
   const config: {
     agentName: string;
@@ -40,14 +67,17 @@ async function main() {
   } = JSON.parse(await fs.readFile(configPath, 'utf8'));
 
   console.log(`Updating Agent: ${config.agentName}`);
-  console.log('New Capabilities:', config.capabilities);
 
-  // 3. Construct Transaction with ALL 3 required arguments
-  // Contract signature: update_agent(nonce, new_uri, new_public_key)
-
-  const registryAddress = process.env.IDENTITY_REGISTRY_ADDRESS;
+  // 3. Validate agent nonce
+  const registryAddress =
+    process.env.IDENTITY_REGISTRY_ADDRESS || CONFIG.ADDRESSES.IDENTITY_REGISTRY;
   if (!registryAddress) {
-    console.error('❌ IDENTITY_REGISTRY_ADDRESS not set in .env');
+    console.error('❌ IDENTITY_REGISTRY_ADDRESS not set');
+    process.exit(1);
+  }
+
+  if (!config.nonce || config.nonce === 0) {
+    console.error('❌ Agent nonce not found in config.json. Register first.');
     process.exit(1);
   }
 
@@ -55,66 +85,107 @@ async function main() {
     bech32: () => senderAddress.toBech32(),
   });
 
-  // Argument 1: Agent Nonce (NFT token nonce)
-  if (!config.nonce || config.nonce === 0) {
-    console.error('❌ Agent nonce not found in config.json. Register first.');
-    process.exit(1);
-  }
-  const nonceHex = BigInt(config.nonce).toString(16).padStart(2, '0');
+  // 4. Load ABI and build transaction using SmartContractTransactionsFactory
+  const abiPath = path.resolve(__dirname, '..', 'identity-registry.abi.json');
+  const abiJson = JSON.parse(await fs.readFile(abiPath, 'utf8'));
+  const abi = Abi.create(abiJson);
 
-  // Argument 2: New URI - points to updated manifest/ARF JSON
-  const newUri =
-    config.manifestUri || `https://agent.molt.bot/${config.agentName}`;
-  const uriHex = Buffer.from(newUri).toString('hex');
-
-  // Argument 3: New Public Key - can keep same or update
-  // Default to current signer's public key
-  const publicKeyHex = senderAddress.toHex();
-
-  // Argument 4: Metadata (optional)
-  let metadataHex = '';
-  if (config.metadata && config.metadata.length > 0) {
-    for (const entry of config.metadata) {
-      const keyHex = Buffer.from(entry.key).toString('hex');
-      const valueHex = Buffer.from(entry.value).toString('hex');
-      metadataHex += `@${keyHex}@${valueHex}`;
-    }
-  }
-
-  console.log(`Updating Agent Nonce: ${config.nonce}`);
-  console.log(`New URI: ${newUri}`);
-  if (config.metadata?.length > 0)
-    console.log(`New Metadata: ${config.metadata.length} entries`);
-
-  // Format: update_agent@<nonceHex>@<uriHex>@<publicKeyHex>[@<key1Hex>@<value1Hex>...]
-  const data = Buffer.from(
-    `update_agent@${nonceHex}@${uriHex}@${publicKeyHex}${metadataHex}`,
-  );
-
-  const tx = new Transaction({
-    nonce: BigInt(account.nonce),
-    value: 0n,
-    receiver: new Address(registryAddress),
-    gasLimit: 10000000n,
-    chainID: process.env.MULTIVERSX_CHAIN_ID || 'D',
-    data: data,
-    sender: senderAddress,
+  const factoryConfig = new TransactionsFactoryConfig({
+    chainID: process.env.MULTIVERSX_CHAIN_ID || CONFIG.CHAIN_ID,
+  });
+  const factory = new SmartContractTransactionsFactory({
+    config: factoryConfig,
+    abi,
   });
 
-  // 4. Sign
-  // 4. Sign
+  // 5. Prepare arguments matching ABI: update_agent(new_name, new_uri, new_public_key, metadata?, services?)
+  const newUri =
+    config.manifestUri || `https://agent.molt.bot/${config.agentName}`;
+  const publicKeyHex = senderAddress.toHex();
+
+  // Build metadata entries
+  const metadataType = new StructType('MetadataEntry', [
+    new FieldDefinition('key', '', new BytesType()),
+    new FieldDefinition('value', '', new BytesType()),
+  ]);
+
+  const metadataTyped = (config.metadata || []).map(
+    m =>
+      new Struct(metadataType, [
+        new Field(new BytesValue(Buffer.from(m.key)), 'key'),
+        new Field(
+          new BytesValue(
+            m.value.startsWith('0x')
+              ? Buffer.from(m.value.substring(2), 'hex')
+              : Buffer.from(m.value),
+          ),
+          'value',
+        ),
+      ]),
+  );
+
+  console.log(`Agent Nonce: ${config.nonce}`);
+  console.log(`New Name: ${config.agentName}`);
+  console.log(`New URI: ${newUri}`);
+  console.log(`Public Key: ${publicKeyHex.substring(0, 16)}...`);
+  if (config.metadata?.length > 0)
+    console.log(`Metadata: ${config.metadata.length} entries`);
+
+  // 6. Get the agent token ID from the registry (vmQuery)
+  let tokenId = '';
+  try {
+    const queryResponse = await provider.queryContract({
+      address: {bech32: () => registryAddress},
+      func: 'getAgentTokenId',
+      getEncodedArguments: () => [],
+    });
+    // Token ID is returned as a hex-encoded string
+    const hexTokenId = Buffer.from(
+      queryResponse.getReturnDataParts()[0],
+    ).toString('utf8');
+    tokenId = hexTokenId;
+    console.log(`Agent Token ID: ${tokenId}`);
+  } catch (e) {
+    console.error('❌ Failed to query agent token ID:', (e as Error).message);
+    process.exit(1);
+  }
+
+  const scArgs = [
+    Buffer.from(config.agentName), // new_name
+    Buffer.from(newUri), // new_uri
+    Buffer.from(publicKeyHex, 'hex'), // new_public_key
+    VariadicValue.fromItemsCounted(...metadataTyped), // metadata
+    VariadicValue.fromItemsCounted(), // services (empty)
+  ];
+
+  const tx = await factory.createTransactionForExecute(senderAddress, {
+    contract: new Address(registryAddress),
+    function: 'update_agent',
+    arguments: scArgs,
+    gasLimit: BigInt(CONFIG.GAS_LIMITS.REGISTER),
+    tokenTransfers: [
+      new TokenTransfer({
+        token: new Token({identifier: tokenId, nonce: BigInt(config.nonce)}),
+        amount: 1n,
+      }),
+    ],
+  });
+
+  tx.nonce = BigInt(account.nonce);
+
+  // 7. Sign
   const serialized = txComputer.computeBytesForSigning(tx);
   const signature = await signer.sign(serialized);
   tx.signature = signature;
 
   console.log('Transaction Signed. Broadcasting...');
 
-  // 5. Broadcast
+  // 8. Broadcast
   try {
     const txHash = await provider.sendTransaction(tx);
     console.log(`✅ Update Transaction Sent: ${txHash}`);
     console.log(
-      `Check Explorer: https://devnet-explorer.multiversx.com/transactions/${txHash}`,
+      `Check Explorer: ${CONFIG.EXPLORER_URL}/transactions/${txHash}`,
     );
   } catch (e: unknown) {
     console.error('Failed to broadcast update:', (e as Error).message);

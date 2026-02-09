@@ -4,6 +4,7 @@ import {
   TransactionComputer,
   Abi,
   DevnetEntrypoint,
+  VariadicValue,
 } from '@multiversx/sdk-core';
 import {ApiNetworkProvider} from '@multiversx/sdk-network-providers';
 import axios from 'axios';
@@ -185,7 +186,8 @@ export class Validator {
         Buffer.from(CONFIG.AGENT.NAME),
         Buffer.from(CONFIG.AGENT.URI),
         Buffer.from(senderAddress.getPublicKey()),
-        [],
+        VariadicValue.fromItemsCounted(), // metadata (empty)
+        VariadicValue.fromItemsCounted(), // services (empty)
       ],
     });
 

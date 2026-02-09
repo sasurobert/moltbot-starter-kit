@@ -1,5 +1,14 @@
 {
     "buildInfo": {
+        "rustc": {
+            "version": "1.91.1",
+            "commitHash": "ed61e7d7e242494fb7057f2657300d9e77bb4fcb",
+            "commitDate": "2025-11-07",
+            "channel": "Stable",
+            "host": "aarch64-apple-darwin",
+            "short": "rustc 1.91.1 (ed61e7d7e 2025-11-07)",
+            "llvmVersion": "21.1"
+        },
         "contractCrate": {
             "name": "reputation-registry",
             "version": "0.1.0"
@@ -11,7 +20,16 @@
     },
     "name": "ReputationRegistry",
     "constructor": {
-        "inputs": [],
+        "inputs": [
+            {
+                "name": "validation_contract_address",
+                "type": "Address"
+            },
+            {
+                "name": "identity_contract_address",
+                "type": "Address"
+            }
+        ],
         "outputs": []
     },
     "upgradeConstructor": {
@@ -19,30 +37,6 @@
         "outputs": []
     },
     "endpoints": [
-        {
-            "name": "set_identity_contract_address",
-            "onlyOwner": true,
-            "mutability": "mutable",
-            "inputs": [
-                {
-                    "name": "address",
-                    "type": "Address"
-                }
-            ],
-            "outputs": []
-        },
-        {
-            "name": "set_validation_contract_address",
-            "onlyOwner": true,
-            "mutability": "mutable",
-            "inputs": [
-                {
-                    "name": "address",
-                    "type": "Address"
-                }
-            ],
-            "outputs": []
-        },
         {
             "name": "submit_feedback",
             "mutability": "mutable",
@@ -93,7 +87,7 @@
             "outputs": []
         },
         {
-            "name": "reputation_score",
+            "name": "get_reputation_score",
             "mutability": "readonly",
             "inputs": [
                 {
@@ -108,7 +102,7 @@
             ]
         },
         {
-            "name": "total_jobs",
+            "name": "get_total_jobs",
             "mutability": "readonly",
             "inputs": [
                 {
@@ -123,7 +117,7 @@
             ]
         },
         {
-            "name": "validation_contract_address",
+            "name": "get_validation_contract_address",
             "mutability": "readonly",
             "inputs": [],
             "outputs": [
@@ -133,7 +127,7 @@
             ]
         },
         {
-            "name": "identity_contract_address",
+            "name": "get_identity_contract_address",
             "mutability": "readonly",
             "inputs": [],
             "outputs": [
@@ -177,7 +171,7 @@
             ]
         },
         {
-            "name": "agent_response",
+            "name": "get_agent_response",
             "mutability": "readonly",
             "inputs": [
                 {
@@ -190,6 +184,30 @@
                     "type": "bytes"
                 }
             ]
+        },
+        {
+            "name": "set_identity_contract_address",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "set_validation_contract_address",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
         }
     ],
     "events": [
