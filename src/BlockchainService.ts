@@ -4,7 +4,7 @@ import {
   DevnetEntrypoint,
   SmartContractController,
 } from '@multiversx/sdk-core';
-import { CONFIG } from './config';
+import {CONFIG} from './config';
 import * as identityAbiJson from './abis/identity-registry.abi.json';
 
 export interface AgentDetails {
@@ -12,14 +12,14 @@ export interface AgentDetails {
   uri: string;
   public_key: string;
   owner: Address;
-  metadata: Array<{ key: string; value: string }>;
+  metadata: Array<{key: string; value: string}>;
 }
 
 export class BlockchainService {
   private identityController: SmartContractController;
 
   constructor() {
-    const entrypoint = new DevnetEntrypoint({ url: CONFIG.API_URL });
+    const entrypoint = new DevnetEntrypoint({url: CONFIG.API_URL});
     // Patch ABI types that sdk-core TypeMapper doesn't recognize
     const raw = JSON.stringify(identityAbiJson);
     const patched = JSON.parse(

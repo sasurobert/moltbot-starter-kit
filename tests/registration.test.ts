@@ -1,4 +1,4 @@
-import { Validator } from '../src/validator';
+import {Validator} from '../src/validator';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -35,7 +35,7 @@ jest.mock('@multiversx/sdk-core', () => {
 jest.mock('@multiversx/sdk-wallet', () => ({
   UserSigner: {
     fromPem: jest.fn().mockReturnValue({
-      getAddress: () => ({ bech32: () => 'erd1user' }),
+      getAddress: () => ({bech32: () => 'erd1user'}),
       sign: jest.fn().mockResolvedValue(Buffer.from('sig')),
     }),
   },
@@ -45,8 +45,8 @@ jest.mock('@multiversx/sdk-wallet', () => ({
 
 jest.mock('@multiversx/sdk-network-providers', () => ({
   ApiNetworkProvider: jest.fn().mockImplementation(() => ({
-    getAccount: jest.fn().mockResolvedValue({ nonce: 1 }),
-    getTransaction: jest.fn().mockResolvedValue({ status: 'success' }), // Registration success
+    getAccount: jest.fn().mockResolvedValue({nonce: 1}),
+    getTransaction: jest.fn().mockResolvedValue({status: 'success'}), // Registration success
     sendTransaction: jest.fn().mockResolvedValue('txHash'),
   })),
 }));
@@ -77,7 +77,7 @@ describe('Validator Auto-Registration', () => {
       .mockRejectedValueOnce({
         response: {
           status: 403,
-          data: { error: 'Unauthorized: Agent not registered' },
+          data: {error: 'Unauthorized: Agent not registered'},
         },
       }) // 1
       .mockResolvedValueOnce({
@@ -88,8 +88,8 @@ describe('Validator Auto-Registration', () => {
           expiresAt: Date.now() + 60000,
         },
       }) // 2a (Challenge)
-      .mockResolvedValueOnce({ data: { txHash: 'txReg' } }) // 2b (Relay Reg)
-      .mockResolvedValueOnce({ data: { txHash: 'txProof' } }); // 3 (Retry Proof)
+      .mockResolvedValueOnce({data: {txHash: 'txReg'}}) // 2b (Relay Reg)
+      .mockResolvedValueOnce({data: {txHash: 'txProof'}}); // 3 (Retry Proof)
 
     const txHash = await validator.submitProof('job1', 'hash1');
 
