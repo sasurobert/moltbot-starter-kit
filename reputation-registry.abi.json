@@ -1,0 +1,232 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.91.1",
+            "commitHash": "ed61e7d7e242494fb7057f2657300d9e77bb4fcb",
+            "commitDate": "2025-11-07",
+            "channel": "Stable",
+            "host": "aarch64-apple-darwin",
+            "short": "rustc 1.91.1 (ed61e7d7e 2025-11-07)",
+            "llvmVersion": "21.1"
+        },
+        "contractCrate": {
+            "name": "reputation-registry",
+            "version": "0.1.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.64.1"
+        }
+    },
+    "name": "ReputationRegistry",
+    "constructor": {
+        "inputs": [
+            {
+                "name": "validation_contract_address",
+                "type": "Address"
+            },
+            {
+                "name": "identity_contract_address",
+                "type": "Address"
+            }
+        ],
+        "outputs": []
+    },
+    "upgradeConstructor": {
+        "inputs": [],
+        "outputs": []
+    },
+    "endpoints": [
+        {
+            "name": "submit_feedback",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes"
+                },
+                {
+                    "name": "agent_nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "rating",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "authorize_feedback",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes"
+                },
+                {
+                    "name": "client",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "append_response",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes"
+                },
+                {
+                    "name": "response_uri",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "get_reputation_score",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "agent_nonce",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "get_total_jobs",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "agent_nonce",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "get_validation_contract_address",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "Address"
+                }
+            ]
+        },
+        {
+            "name": "get_identity_contract_address",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "Address"
+                }
+            ]
+        },
+        {
+            "name": "has_given_feedback",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "is_feedback_authorized",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes"
+                },
+                {
+                    "name": "client",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "get_agent_response",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
+            "name": "set_identity_contract_address",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "set_validation_contract_address",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        }
+    ],
+    "events": [
+        {
+            "identifier": "reputationUpdated",
+            "inputs": [
+                {
+                    "name": "agent_nonce",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "new_score",
+                    "type": "BigUint"
+                }
+            ]
+        }
+    ],
+    "esdtAttributes": [],
+    "hasCallback": false,
+    "types": {}
+}

@@ -156,19 +156,21 @@ async function main() {
     if (config.metadata?.length > 0)
         console.log(`Metadata: ${config.metadata.length} entries`);
     // Use factory to build the transaction with correct ABI encoding
-    // Arguments match: register_agent(name: bytes, uri: bytes, public_key: bytes, metadata: optional<List<MetadataEntry>>)
-    const scArgs = metadataArgs.length > 0
-        ? [
-            Buffer.from(config.agentName),
-            Buffer.from(agentUri),
-            Buffer.from(publicKeyHex, 'hex'),
-            metadataArgs,
-        ]
-        : [
-            Buffer.from(config.agentName),
-            Buffer.from(agentUri),
-            Buffer.from(publicKeyHex, 'hex'),
-        ];
+    // Arguments match: register_agent(name: bytes, uri: bytes, public_key: bytes, metadata: counted-variadic<MetadataEntry>, services: counted-variadic<ServiceConfigInput>)
+    // We must explicitly construct TypedValues for Counted Variadic arguments
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const metadataType = abi.registry.getStruct('MetadataEntry');
+    const metadataTyped = metadataArgs.map(m => new sdk_core_1.Struct(metadataType, [
+        new sdk_core_1.Field(new sdk_core_1.BytesValue(m.key), 'key'),
+        new sdk_core_1.Field(new sdk_core_1.BytesValue(m.value), 'value'),
+    ]));
+    const scArgs = [
+        Buffer.from(config.agentName),
+        Buffer.from(agentUri),
+        Buffer.from(publicKeyHex, 'hex'),
+        sdk_core_1.VariadicValue.fromItemsCounted(...metadataTyped),
+        sdk_core_1.VariadicValue.fromItemsCounted(), // services
+    ];
     const tx = await factory.createTransactionForExecute(senderAddress, {
         contract: new sdk_core_1.Address(registryAddress),
         function: 'register_agent',

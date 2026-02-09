@@ -9,6 +9,10 @@ import {
   SmartContractTransactionsFactory,
   TransactionsFactoryConfig,
   Abi,
+  VariadicValue,
+  Struct,
+  BytesValue,
+  Field,
 } from '@multiversx/sdk-core';
 import {promises as fs} from 'fs';
 import * as dotenv from 'dotenv';
@@ -166,20 +170,26 @@ async function main() {
     console.log(`Metadata: ${config.metadata.length} entries`);
 
   // Use factory to build the transaction with correct ABI encoding
-  // Arguments match: register_agent(name: bytes, uri: bytes, public_key: bytes, metadata: optional<List<MetadataEntry>>)
-  const scArgs =
-    metadataArgs.length > 0
-      ? [
-          Buffer.from(config.agentName),
-          Buffer.from(agentUri),
-          Buffer.from(publicKeyHex, 'hex'),
-          metadataArgs,
-        ]
-      : [
-          Buffer.from(config.agentName),
-          Buffer.from(agentUri),
-          Buffer.from(publicKeyHex, 'hex'),
-        ];
+  // Arguments match: register_agent(name: bytes, uri: bytes, public_key: bytes, metadata: counted-variadic<MetadataEntry>, services: counted-variadic<ServiceConfigInput>)
+
+  // We must explicitly construct TypedValues for Counted Variadic arguments
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const metadataType = (abi as any).registry.getStruct('MetadataEntry');
+  const metadataTyped = metadataArgs.map(
+    m =>
+      new Struct(metadataType, [
+        new Field(new BytesValue(m.key), 'key'),
+        new Field(new BytesValue(m.value), 'value'),
+      ]),
+  );
+
+  const scArgs = [
+    Buffer.from(config.agentName),
+    Buffer.from(agentUri),
+    Buffer.from(publicKeyHex, 'hex'),
+    VariadicValue.fromItemsCounted(...metadataTyped),
+    VariadicValue.fromItemsCounted(), // services
+  ];
 
   const tx = await factory.createTransactionForExecute(senderAddress, {
     contract: new Address(registryAddress),

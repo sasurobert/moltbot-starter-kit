@@ -1,0 +1,209 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.91.1",
+            "commitHash": "ed61e7d7e242494fb7057f2657300d9e77bb4fcb",
+            "commitDate": "2025-11-07",
+            "channel": "Stable",
+            "host": "aarch64-apple-darwin",
+            "short": "rustc 1.91.1 (ed61e7d7e 2025-11-07)",
+            "llvmVersion": "21.1"
+        },
+        "contractCrate": {
+            "name": "validation-registry",
+            "version": "0.1.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.64.1"
+        }
+    },
+    "name": "ValidationRegistry",
+    "constructor": {
+        "inputs": [
+            {
+                "name": "identity_registry_address",
+                "type": "Address"
+            }
+        ],
+        "outputs": []
+    },
+    "upgradeConstructor": {
+        "inputs": [],
+        "outputs": []
+    },
+    "endpoints": [
+        {
+            "name": "init_job",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes"
+                },
+                {
+                    "name": "agent_nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "service_id",
+                    "type": "optional<u32>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "submit_proof",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes"
+                },
+                {
+                    "name": "proof",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "verify_job",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "clean_old_jobs",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "job_ids",
+                    "type": "variadic<bytes>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "is_job_verified",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "get_job_data",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "optional<JobData>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "set_identity_registry_address",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        }
+    ],
+    "events": [
+        {
+            "identifier": "jobVerified",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes",
+                    "indexed": true
+                },
+                {
+                    "name": "agent_nonce",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "status",
+                    "type": "JobStatus"
+                }
+            ]
+        }
+    ],
+    "esdtAttributes": [],
+    "hasCallback": false,
+    "types": {
+        "JobData": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "status",
+                    "type": "JobStatus"
+                },
+                {
+                    "name": "proof",
+                    "type": "bytes"
+                },
+                {
+                    "name": "employer",
+                    "type": "Address"
+                },
+                {
+                    "name": "creation_timestamp",
+                    "type": "u64"
+                },
+                {
+                    "name": "agent_nonce",
+                    "type": "u64"
+                }
+            ]
+        },
+        "JobStatus": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "New",
+                    "discriminant": 0
+                },
+                {
+                    "name": "Pending",
+                    "discriminant": 1
+                },
+                {
+                    "name": "Verified",
+                    "discriminant": 2
+                }
+            ]
+        }
+    }
+}
