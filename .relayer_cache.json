@@ -139,6 +139,34 @@
     "erd1fq836qar0p7tjvhf5aklkuta3ug02lpwcf8d3gzeyha9pmpj2k2slca85n": {
       "relayerAddress": "erd1m8knuevpse645n0g79h7pl0jak6pqshcfdrd3u7605qfp734f4gsvg675k",
       "timestamp": 1770655655940
+    },
+    "erd1zsuce0gxcu35qglk3uedyfywmr94swmlx0dpxt8xx0q4pvlazdgsjc0ryu": {
+      "relayerAddress": "erd1r3dh6ze9dm4v4rs2lxa5385p2qlndqapm6689asafe44yg6ttvfs607t70",
+      "timestamp": 1770656038598
+    },
+    "erd13wthjmu6uujsn4j0fwk3u979ssv0dah66wsvt8r7nczy55dkpy2q53hp24": {
+      "relayerAddress": "erd1yywk0zdpxj37dfnme9j48c2hky9n48m0nwv5c3rp9w5g4ygx8jvqxun8ml",
+      "timestamp": 1770656209975
+    },
+    "erd1p4renfz860ucv54r3s73nepe9g2lk708klnenw47uknnq0gefpxqsgaez0": {
+      "relayerAddress": "erd1rpn0nhtjqmfk8u496cy3ng3klt5cywat6gsukmt7e3trsgacvv6qdd84vx",
+      "timestamp": 1770659021750
+    },
+    "erd13gr8nflrgtams9l7qq0x0z42pk3thk7lyqqznphhnwkl6jvyd5ps2uqmja": {
+      "relayerAddress": "erd17z458ptzp78jqe0jsjzc9g9tjcjhlve8045u87h7tvuss5q9d5askjy5wf",
+      "timestamp": 1770659255471
+    },
+    "erd19v2hxtlw8sje3yfe9w369v6etfyt7addgnywmwk4rekkn3hgajsqjm26dh": {
+      "relayerAddress": "erd1nylcdmawf266puepwzn5xe45qyuavtn3ma5v7rvcyn2570w3qtqqktuz2d",
+      "timestamp": 1770659599868
+    },
+    "erd1fn8lxvd56ux49j99fravvpgrw3ma5p5jwkgxwrvurvyj4e4tkfmqdsn7cu": {
+      "relayerAddress": "erd1v3kff877czsfdftagk3mvggxwy0qdgphpw7u5aa4jpwpy0kws70qx7zts7",
+      "timestamp": 1770659619610
+    },
+    "erd1297skj63p8s40s4qv8nnnp48jt5pejvk2cz7cvfectzvm2s4u3xqk39ljk": {
+      "relayerAddress": "erd16jdnrzwj5mev4rkdf2tjxrzg0f4f7n6gaezenwcye7hxfs6jyukq7nf866",
+      "timestamp": 1770659669874
     }
   }
 }
