@@ -1,23 +1,4 @@
 {
-    "buildInfo": {
-        "rustc": {
-            "version": "1.91.1",
-            "commitHash": "ed61e7d7e242494fb7057f2657300d9e77bb4fcb",
-            "commitDate": "2025-11-07",
-            "channel": "Stable",
-            "host": "aarch64-apple-darwin",
-            "short": "rustc 1.91.1 (ed61e7d7e 2025-11-07)",
-            "llvmVersion": "21.1"
-        },
-        "contractCrate": {
-            "name": "identity-registry",
-            "version": "0.1.0"
-        },
-        "framework": {
-            "name": "multiversx-sc",
-            "version": "0.64.1"
-        }
-    },
     "name": "IdentityRegistry",
     "constructor": {
         "inputs": [],

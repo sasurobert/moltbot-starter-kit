@@ -1,23 +1,4 @@
 {
-    "buildInfo": {
-        "rustc": {
-            "version": "1.91.1",
-            "commitHash": "ed61e7d7e242494fb7057f2657300d9e77bb4fcb",
-            "commitDate": "2025-11-07",
-            "channel": "Stable",
-            "host": "aarch64-apple-darwin",
-            "short": "rustc 1.91.1 (ed61e7d7e 2025-11-07)",
-            "llvmVersion": "21.1"
-        },
-        "contractCrate": {
-            "name": "validation-registry",
-            "version": "0.1.0"
-        },
-        "framework": {
-            "name": "multiversx-sc",
-            "version": "0.64.1"
-        }
-    },
     "name": "ValidationRegistry",
     "constructor": {
         "inputs": [
@@ -72,12 +53,81 @@
             "outputs": []
         },
         {
-            "name": "verify_job",
-            "onlyOwner": true,
+            "docs": [
+                "NFT-holder variant: proves ownership by sending the agent NFT.",
+                "The contract verifies token ID + nonce, executes proof, and returns the NFT."
+            ],
+            "name": "submit_proof_with_nft",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes"
+                },
+                {
+                    "name": "proof",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "ERC-8004: Agent requests validation from a specific validator.",
+                "MUST be called by the owner of the agent (agentId)."
+            ],
+            "name": "validation_request",
             "mutability": "mutable",
             "inputs": [
                 {
                     "name": "job_id",
+                    "type": "bytes"
+                },
+                {
+                    "name": "validator_address",
+                    "type": "Address"
+                },
+                {
+                    "name": "request_uri",
+                    "type": "bytes"
+                },
+                {
+                    "name": "request_hash",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "ERC-8004: Validator responds with a result (0-100).",
+                "MUST be called by the validatorAddress from the original request.",
+                "Can be called multiple times for progressive validation."
+            ],
+            "name": "validation_response",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "request_hash",
+                    "type": "bytes"
+                },
+                {
+                    "name": "response",
+                    "type": "u8"
+                },
+                {
+                    "name": "_response_uri",
+                    "type": "bytes"
+                },
+                {
+                    "name": "response_hash",
+                    "type": "bytes"
+                },
+                {
+                    "name": "tag",
                     "type": "bytes"
                 }
             ],
@@ -127,6 +177,43 @@
             ]
         },
         {
+            "docs": [
+                "ERC-8004: Returns validation status for a request hash."
+            ],
+            "name": "get_validation_status",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "request_hash",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "optional<ValidationRequestData>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "docs": [
+                "ERC-8004: Returns all validation request hashes for an agent."
+            ],
+            "name": "get_agent_validations",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "agent_nonce",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<bytes>"
+                }
+            ]
+        },
+        {
             "name": "set_identity_registry_address",
             "onlyOwner": true,
             "mutability": "mutable",
@@ -141,11 +228,11 @@
     ],
     "events": [
         {
-            "identifier": "jobVerified",
+            "identifier": "validationRequest",
             "inputs": [
                 {
-                    "name": "job_id",
-                    "type": "bytes",
+                    "name": "validator_address",
+                    "type": "Address",
                     "indexed": true
                 },
                 {
@@ -154,8 +241,37 @@
                     "indexed": true
                 },
                 {
-                    "name": "status",
-                    "type": "JobStatus"
+                    "name": "request_hash",
+                    "type": "bytes",
+                    "indexed": true
+                },
+                {
+                    "name": "request_uri",
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
+            "identifier": "validationResponse",
+            "inputs": [
+                {
+                    "name": "validator_address",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "agent_nonce",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "request_hash",
+                    "type": "bytes",
+                    "indexed": true
+                },
+                {
+                    "name": "data",
+                    "type": "ValidationRequestData"
                 }
             ]
         }
@@ -202,6 +318,43 @@
                 {
                     "name": "Verified",
                     "discriminant": 2
+                },
+                {
+                    "name": "ValidationRequested",
+                    "discriminant": 3
+                }
+            ]
+        },
+        "ValidationRequestData": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "validator_address",
+                    "type": "Address"
+                },
+                {
+                    "name": "agent_nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "job_id",
+                    "type": "bytes"
+                },
+                {
+                    "name": "response",
+                    "type": "u8"
+                },
+                {
+                    "name": "response_hash",
+                    "type": "bytes"
+                },
+                {
+                    "name": "tag",
+                    "type": "bytes"
+                },
+                {
+                    "name": "last_update",
+                    "type": "u64"
                 }
             ]
         }
