@@ -34,7 +34,7 @@ describe('ServiceConfigInput Struct Mapping', () => {
         const typed = mapServicesToTyped(services);
         expect(typed).toHaveLength(1);
         const struct = typed[0];
-        expect(struct.getTypeName?.() ?? struct.getType().getName()).toBe('ServiceConfigInput');
+        expect(struct.getType().getName()).toBe('ServiceConfigInput');
         const fields = struct.getFields();
         expect(fields).toHaveLength(4);
         expect(fields[0].name).toBe('service_id');
@@ -97,7 +97,7 @@ describe('MetadataEntry Struct Mapping', () => {
             new sdk_core_1.Field(new sdk_core_1.BytesValue(Buffer.from(m.value)), 'value'),
         ]));
         expect(metadataTyped).toHaveLength(2);
-        expect(metadataTyped[0].getTypeName?.() ?? metadataTyped[0].getType().getName()).toBe('MetadataEntry');
+        expect(metadataTyped[0].getType().getName()).toBe('MetadataEntry');
     });
 });
 describe('Combined scArgs construction', () => {
