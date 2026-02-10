@@ -16,6 +16,14 @@ import {
   StructType,
   FieldDefinition,
   BytesType,
+  U32Type,
+  U32Value,
+  BigUIntType,
+  BigUIntValue,
+  TokenIdentifierType,
+  TokenIdentifierValue,
+  U64Type,
+  U64Value,
 } from '@multiversx/sdk-core';
 import { promises as fs } from 'fs';
 import * as dotenv from 'dotenv';
@@ -112,6 +120,12 @@ async function main() {
     capabilities: string[];
     manifestUri: string;
     metadata: Array<{ key: string; value: string }>;
+    services: Array<{
+      service_id: number;
+      price: string;
+      token: string;
+      nonce: number;
+    }>;
   } = {
     agentName: 'Moltbot',
     nonce: 0,
@@ -119,6 +133,7 @@ async function main() {
     capabilities: [],
     manifestUri: '',
     metadata: [],
+    services: [],
   };
   try {
     config = JSON.parse(await fs.readFile(configPath, 'utf8'));
@@ -190,12 +205,30 @@ async function main() {
       ]),
   );
 
+  // Construct the ServiceConfigInput StructType manually.
+  const serviceConfigType = new StructType('ServiceConfigInput', [
+    new FieldDefinition('service_id', '', new U32Type()),
+    new FieldDefinition('price', '', new BigUIntType()),
+    new FieldDefinition('token', '', new TokenIdentifierType()),
+    new FieldDefinition('nonce', '', new U64Type()),
+  ]);
+
+  const servicesTyped = (config.services || []).map(
+    s =>
+      new Struct(serviceConfigType, [
+        new Field(new U32Value(s.service_id), 'service_id'),
+        new Field(new BigUIntValue(s.price), 'price'),
+        new Field(new TokenIdentifierValue(s.token), 'token'),
+        new Field(new U64Value(s.nonce), 'nonce'),
+      ]),
+  );
+
   const scArgs = [
     Buffer.from(config.agentName),
     Buffer.from(agentUri),
     Buffer.from(publicKeyHex, 'hex'),
     VariadicValue.fromItemsCounted(...metadataTyped),
-    VariadicValue.fromItemsCounted(), // services (empty)
+    VariadicValue.fromItemsCounted(...servicesTyped),
   ];
 
   const tx = await factory.createTransactionForExecute(senderAddress, {
