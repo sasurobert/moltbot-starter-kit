@@ -1,34 +1,63 @@
 #!/bin/bash
+set -e
 
-echo "🚀 Setting up Moltbot Starter Kit..."
+echo "============================================"
+echo " Moltbot Starter Kit — Setup"
+echo "============================================"
 
-# 1. Check Node.js
-if ! command -v node &> /dev/null; then
-    echo "❌ Node.js is not installed. Please install Node.js v18+."
-    exit 1
-fi
+# Prerequisites
+command -v node >/dev/null 2>&1 || { echo "❌ Node.js not found. Install v18+."; exit 1; }
+NODE_MAJOR=$(node -v | sed 's/v//' | cut -d. -f1)
+[ "$NODE_MAJOR" -ge 18 ] 2>/dev/null || echo "⚠ Node.js v18+ recommended (found $(node -v))"
 
-# 2. Install Dependencies
+echo "✓ node $(node -v), npm $(npm -v)"
+
+# Install
 echo "📦 Installing dependencies..."
 npm install
 
-# 3. Setup Config
+# Config
 if [ ! -f .env ]; then
-    echo "⚙️  Creating .env from example..."
-    cp .env.example .env 2>/dev/null || echo "MULTIVERSX_CHAIN_ID=D" > .env
+    if [ -f .env.example ]; then
+        cp .env.example .env
+        echo "⚙️  Created .env from .env.example — edit before running"
+    else
+        cat > .env << 'EOF'
+MULTIVERSX_CHAIN_ID=D
+MULTIVERSX_API_URL=https://devnet-api.multiversx.com
+IDENTITY_REGISTRY_ADDRESS=erd1...
+EOF
+        echo "⚙️  Created default .env — edit before running"
+    fi
 fi
 
 if [ ! -f config.json ]; then
-    echo "⚙️  Creating config.json..."
-    echo '{ "agentName": "MoltBot-Gen1", "nonce": 0, "pricing": "1USDC", "capabilities": ["search", "compute"] }' > config.json
+    cat > config.json << 'EOF'
+{
+    "agentName": "MoltBot-Gen1",
+    "nonce": 0,
+    "pricing": "1USDC",
+    "capabilities": ["search", "compute"]
+}
+EOF
+    echo "⚙️  Created default config.json"
 fi
 
-# 4. Generate Wallet
+# Wallet
 if [ ! -f wallet.pem ]; then
-    echo "🔑 Generating Wallet..."
-    npx ts-node scripts/generate_wallet.ts
-else
-    echo "✅ Wallet found."
+    echo "🔑 Generating wallet..."
+    npx ts-node scripts/generate_wallet.ts 2>/dev/null || echo "⚠ Wallet generation skipped (run manually: npx ts-node scripts/generate_wallet.ts)"
 fi
 
-echo "✅ Setup Complete! Run 'npm run start' to launch."
+# Build
+echo "🔨 Building..."
+npm run build
+
+# Test
+echo "🧪 Running tests..."
+npm test
+
+echo ""
+echo "✅ Setup complete!"
+echo "   Register: npm run register"
+echo "   Start:    npm start"

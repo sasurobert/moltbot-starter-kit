@@ -118,7 +118,7 @@ async function main() {
     try {
         const queryResponse = await provider.queryContract({
             address: { bech32: () => registryAddress },
-            func: 'getAgentTokenId',
+            func: 'get_agent_token_id',
             getEncodedArguments: () => [],
         });
         // Token ID is returned as a hex-encoded string

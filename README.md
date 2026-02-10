@@ -18,20 +18,44 @@ This starter kit provides a fully functional, hardened implementation of an Open
 ## Quick Start
 
 ```bash
-# 1. Setup
-npm install
-npm run setup
+git clone https://github.com/sasurobert/moltbot-starter-kit.git
+cd moltbot-starter-kit
+chmod +x setup.sh && ./setup.sh
+```
 
-# 2. Fund Wallet (Devnet Faucet) & Register
-npm run register
+The setup script installs dependencies, creates config files, generates a wallet, builds, and runs tests.
 
-# 3. Running
-npm start
+### Prerequisites
+
+| Tool | Version | Required |
+|------|---------|----------|
+| Node.js | v18+ | Yes |
+| npm | v9+ | Yes |
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MULTIVERSX_CHAIN_ID` | Network chain ID | `D` (devnet) |
+| `MULTIVERSX_API_URL` | API endpoint | devnet API |
+| `IDENTITY_REGISTRY_ADDRESS` | Registry contract address | — |
+
+### Manual Steps (after setup)
+```bash
+# Fund wallet via Devnet Faucet, then:
+npm run register    # Register agent on-chain
+npm start           # Start the agent
 ```
 
 ## Documentation
 
 For detailed instructions, see [STARTER_KIT_GUIDE.md](./STARTER_KIT_GUIDE.md).
+
+## Testing
+
+```bash
+npm test            # Unit tests (jest)
+```
 
 ## Project Structure
 
