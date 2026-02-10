@@ -108,6 +108,7 @@ async function main() {
         capabilities: [],
         manifestUri: '',
         metadata: [],
+        services: [],
     };
     try {
         config = JSON.parse(await fs_1.promises.readFile(configPath, 'utf8'));
@@ -168,12 +169,25 @@ async function main() {
         new sdk_core_1.Field(new sdk_core_1.BytesValue(m.key), 'key'),
         new sdk_core_1.Field(new sdk_core_1.BytesValue(m.value), 'value'),
     ]));
+    // Construct the ServiceConfigInput StructType manually.
+    const serviceConfigType = new sdk_core_1.StructType('ServiceConfigInput', [
+        new sdk_core_1.FieldDefinition('service_id', '', new sdk_core_1.U32Type()),
+        new sdk_core_1.FieldDefinition('price', '', new sdk_core_1.BigUIntType()),
+        new sdk_core_1.FieldDefinition('token', '', new sdk_core_1.TokenIdentifierType()),
+        new sdk_core_1.FieldDefinition('nonce', '', new sdk_core_1.U64Type()),
+    ]);
+    const servicesTyped = (config.services || []).map(s => new sdk_core_1.Struct(serviceConfigType, [
+        new sdk_core_1.Field(new sdk_core_1.U32Value(s.service_id), 'service_id'),
+        new sdk_core_1.Field(new sdk_core_1.BigUIntValue(s.price), 'price'),
+        new sdk_core_1.Field(new sdk_core_1.TokenIdentifierValue(s.token), 'token'),
+        new sdk_core_1.Field(new sdk_core_1.U64Value(s.nonce), 'nonce'),
+    ]));
     const scArgs = [
         Buffer.from(config.agentName),
         Buffer.from(agentUri),
         Buffer.from(publicKeyHex, 'hex'),
         sdk_core_1.VariadicValue.fromItemsCounted(...metadataTyped),
-        sdk_core_1.VariadicValue.fromItemsCounted(), // services (empty)
+        sdk_core_1.VariadicValue.fromItemsCounted(...servicesTyped),
     ];
     const tx = await factory.createTransactionForExecute(senderAddress, {
         contract: new sdk_core_1.Address(registryAddress),

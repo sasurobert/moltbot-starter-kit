@@ -14,6 +14,14 @@ import {
   BytesType,
   TokenTransfer,
   Token,
+  U32Type,
+  U32Value,
+  BigUIntType,
+  BigUIntValue,
+  TokenIdentifierType,
+  TokenIdentifierValue,
+  U64Type,
+  U64Value,
 } from '@multiversx/sdk-core';
 import {
   ApiNetworkProvider,
@@ -64,6 +72,12 @@ async function main() {
     nonce: number;
     manifestUri: string;
     metadata: Array<{ key: string; value: string }>;
+    services: Array<{
+      service_id: number;
+      price: string;
+      token: string;
+      nonce: number;
+    }>;
   } = JSON.parse(await fs.readFile(configPath, 'utf8'));
 
   console.log(`Updating Agent: ${config.agentName}`);
@@ -153,12 +167,30 @@ async function main() {
     process.exit(1);
   }
 
+  // Construct the ServiceConfigInput StructType manually.
+  const serviceConfigType = new StructType('ServiceConfigInput', [
+    new FieldDefinition('service_id', '', new U32Type()),
+    new FieldDefinition('price', '', new BigUIntType()),
+    new FieldDefinition('token', '', new TokenIdentifierType()),
+    new FieldDefinition('nonce', '', new U64Type()),
+  ]);
+
+  const servicesTyped = (config.services || []).map(
+    s =>
+      new Struct(serviceConfigType, [
+        new Field(new U32Value(s.service_id), 'service_id'),
+        new Field(new BigUIntValue(s.price), 'price'),
+        new Field(new TokenIdentifierValue(s.token), 'token'),
+        new Field(new U64Value(s.nonce), 'nonce'),
+      ]),
+  );
+
   const scArgs = [
     Buffer.from(config.agentName), // new_name
     Buffer.from(newUri), // new_uri
     Buffer.from(publicKeyHex, 'hex'), // new_public_key
     VariadicValue.fromItemsCounted(...metadataTyped), // metadata
-    VariadicValue.fromItemsCounted(), // services (empty)
+    VariadicValue.fromItemsCounted(...servicesTyped), // services
   ];
 
   const tx = await factory.createTransactionForExecute(senderAddress, {
