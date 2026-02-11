@@ -1,4 +1,23 @@
 {
+    "buildInfo": {
+        "rustc": {
+            "version": "1.91.1",
+            "commitHash": "ed61e7d7e242494fb7057f2657300d9e77bb4fcb",
+            "commitDate": "2025-11-07",
+            "channel": "Stable",
+            "host": "aarch64-apple-darwin",
+            "short": "rustc 1.91.1 (ed61e7d7e 2025-11-07)",
+            "llvmVersion": "21.1"
+        },
+        "contractCrate": {
+            "name": "reputation-registry",
+            "version": "0.1.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.64.1"
+        }
+    },
     "name": "ReputationRegistry",
     "constructor": {
         "inputs": [
@@ -20,10 +39,10 @@
     "endpoints": [
         {
             "docs": [
-                "Submit feedback for a job. Caller must be the employer who created the job.",
-                "Job must have a validation response recorded (no pre-authorization needed)."
+                "Simple feedback for a job. Caller must be the employer who created the job.",
+                "Computes a cumulative moving average on-chain."
             ],
-            "name": "submit_feedback",
+            "name": "giveFeedbackSimple",
             "mutability": "mutable",
             "inputs": [
                 {
@@ -40,6 +59,90 @@
                 }
             ],
             "outputs": []
+        },
+        {
+            "docs": [
+                "ERC-8004: Anyone can give feedback (except the agent owner).",
+                "Stores raw signals — no on-chain scoring. Off-chain aggregation expected."
+            ],
+            "name": "giveFeedback",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "agent_nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "value",
+                    "type": "i64"
+                },
+                {
+                    "name": "value_decimals",
+                    "type": "u8"
+                },
+                {
+                    "name": "tag1",
+                    "type": "bytes"
+                },
+                {
+                    "name": "tag2",
+                    "type": "bytes"
+                },
+                {
+                    "name": "endpoint",
+                    "type": "bytes"
+                },
+                {
+                    "name": "feedback_uri",
+                    "type": "bytes"
+                },
+                {
+                    "name": "feedback_hash",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "ERC-8004: Only the original feedback author can revoke their feedback."
+            ],
+            "name": "revokeFeedback",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "agent_nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "feedback_index",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "readFeedback",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "agent_nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "client",
+                    "type": "Address"
+                },
+                {
+                    "name": "feedback_index",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "FeedbackData"
+                }
+            ]
         },
         {
             "docs": [
@@ -141,6 +244,41 @@
             ]
         },
         {
+            "name": "getLastIndex",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "agent_nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "client",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getClients",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "agent_nonce",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<Address>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
             "name": "set_identity_contract_address",
             "onlyOwner": true,
             "mutability": "mutable",
@@ -179,9 +317,137 @@
                     "type": "BigUint"
                 }
             ]
+        },
+        {
+            "identifier": "newFeedback",
+            "inputs": [
+                {
+                    "name": "agent_nonce",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "client_address",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "data",
+                    "type": "NewFeedbackEventData"
+                }
+            ]
+        },
+        {
+            "identifier": "feedbackRevoked",
+            "inputs": [
+                {
+                    "name": "agent_nonce",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "client_address",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "feedback_index",
+                    "type": "u64",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "responseAppended",
+            "inputs": [
+                {
+                    "name": "agent_nonce",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "client_address",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "feedback_index",
+                    "type": "u64",
+                    "indexed": true
+                }
+            ]
         }
     ],
     "esdtAttributes": [],
     "hasCallback": false,
-    "types": {}
+    "types": {
+        "FeedbackData": {
+            "type": "struct",
+            "docs": [
+                "ERC-8004 feedback data — stores raw signal, not computed scores."
+            ],
+            "fields": [
+                {
+                    "name": "value",
+                    "type": "i64"
+                },
+                {
+                    "name": "value_decimals",
+                    "type": "u8"
+                },
+                {
+                    "name": "tag1",
+                    "type": "bytes"
+                },
+                {
+                    "name": "tag2",
+                    "type": "bytes"
+                },
+                {
+                    "name": "is_revoked",
+                    "type": "bool"
+                }
+            ]
+        },
+        "NewFeedbackEventData": {
+            "type": "struct",
+            "docs": [
+                "ERC-8004 new feedback event data — packed as a single data argument."
+            ],
+            "fields": [
+                {
+                    "name": "feedback_index",
+                    "type": "u64"
+                },
+                {
+                    "name": "value",
+                    "type": "i64"
+                },
+                {
+                    "name": "value_decimals",
+                    "type": "u8"
+                },
+                {
+                    "name": "tag1",
+                    "type": "bytes"
+                },
+                {
+                    "name": "tag2",
+                    "type": "bytes"
+                },
+                {
+                    "name": "endpoint",
+                    "type": "bytes"
+                },
+                {
+                    "name": "feedback_uri",
+                    "type": "bytes"
+                },
+                {
+                    "name": "feedback_hash",
+                    "type": "bytes"
+                }
+            ]
+        }
+    }
 }

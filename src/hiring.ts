@@ -4,14 +4,14 @@ import {
   TransactionComputer,
   UserSigner,
 } from '@multiversx/sdk-core';
-import {ApiNetworkProvider} from '@multiversx/sdk-network-providers';
-import {CONFIG} from './config';
-import {Facilitator} from './facilitator';
+import { ApiNetworkProvider } from '@multiversx/sdk-network-providers';
+import { CONFIG } from './config';
+import { Facilitator } from './facilitator';
 import * as fs from 'fs';
 
-import {Logger} from './utils/logger';
-import {createEntrypoint} from './utils/entrypoint';
-import {createPatchedAbi} from './utils/abi';
+import { Logger } from './utils/logger';
+import { createEntrypoint } from './utils/entrypoint';
+import { createPatchedAbi } from './utils/abi';
 import * as validationAbiJson from './abis/validation-registry.abi.json';
 import * as reputationAbiJson from './abis/reputation-registry.abi.json';
 
@@ -57,7 +57,7 @@ async function runEmployerFlow() {
       logger.info(`--- Settlement Attempt ${attempt} ---`);
 
       // 1. Fetch Fresh Nonce
-      const account = await provider.getAccount({bech32: () => employerAddr});
+      const account = await provider.getAccount({ bech32: () => employerAddr });
       logger.info(`Fetched Sender Nonce: ${account.nonce}`);
 
       // 2. Construct Transaction
@@ -211,11 +211,11 @@ async function submitReputation(
   const abi = createPatchedAbi(reputationAbiJson);
   const factory = entrypoint.createSmartContractTransactionsFactory(abi);
 
-  const account = await provider.getAccount({bech32: () => sender});
+  const account = await provider.getAccount({ bech32: () => sender });
 
   const tx = await factory.createTransactionForExecute(senderAddr, {
     contract: registry,
-    function: 'submit_feedback',
+    function: 'giveFeedbackSimple',
     arguments: [Buffer.from(jobId), BigInt(agentNonce), BigInt(rating)],
     gasLimit: 10_000_000n,
   });

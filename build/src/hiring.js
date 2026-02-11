@@ -209,7 +209,7 @@ async function submitReputation(jobId, rating, provider, signer, sender) {
     const account = await provider.getAccount({ bech32: () => sender });
     const tx = await factory.createTransactionForExecute(senderAddr, {
         contract: registry,
-        function: 'submit_feedback',
+        function: 'giveFeedbackSimple',
         arguments: [Buffer.from(jobId), BigInt(agentNonce), BigInt(rating)],
         gasLimit: 10000000n,
     });
