@@ -1,0 +1,19 @@
+{
+  "agentName": "moltbot",
+  "capabilities": [
+    "inference",
+    "summarization"
+  ],
+  "nonce": 1,
+  "manifestUri": "https://updated.moltbot.io/manifest.json",
+  "metadata": [
+    {
+      "key": "version",
+      "value": "2.0.0"
+    },
+    {
+      "key": "model",
+      "value": "gpt-4-turbo"
+    }
+  ]
+}
