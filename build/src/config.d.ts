@@ -6,6 +6,7 @@ export declare const CONFIG: {
         IDENTITY_REGISTRY: string;
         VALIDATION_REGISTRY: string;
         REPUTATION_REGISTRY: string;
+        ESCROW_CONTRACT: string;
     };
     PROVIDERS: {
         MCP_URL: string;

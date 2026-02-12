@@ -1,0 +1,266 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.91.1",
+            "commitHash": "ed61e7d7e242494fb7057f2657300d9e77bb4fcb",
+            "commitDate": "2025-11-07",
+            "channel": "Stable",
+            "host": "aarch64-apple-darwin",
+            "short": "rustc 1.91.1 (ed61e7d7e 2025-11-07)",
+            "llvmVersion": "21.1"
+        },
+        "contractCrate": {
+            "name": "escrow",
+            "version": "0.1.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.64.1"
+        }
+    },
+    "docs": [
+        "ACP Escrow Contract — locks funds for agent jobs, releases on proof verification,",
+        "refunds if deadline passes without verified proof.",
+        "",
+        "Follows Checks-Effects-Interactions pattern throughout."
+    ],
+    "name": "EscrowContract",
+    "constructor": {
+        "inputs": [
+            {
+                "name": "validation_contract_address",
+                "type": "Address"
+            },
+            {
+                "name": "identity_contract_address",
+                "type": "Address"
+            }
+        ],
+        "outputs": []
+    },
+    "upgradeConstructor": {
+        "inputs": [],
+        "outputs": []
+    },
+    "endpoints": [
+        {
+            "docs": [
+                "Deposit funds into escrow for a specific job.",
+                "Accepts EGLD or any ESDT token.",
+                "`deadline` is a Unix timestamp (seconds) after which a refund is allowed."
+            ],
+            "name": "deposit",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes"
+                },
+                {
+                    "name": "receiver",
+                    "type": "Address"
+                },
+                {
+                    "name": "poa_hash",
+                    "type": "bytes"
+                },
+                {
+                    "name": "deadline",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Release escrowed funds to the receiver.",
+                "Only callable by the employer. Job must be verified in the ValidationRegistry."
+            ],
+            "name": "release",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Refund escrowed funds to the employer if the deadline has passed.",
+                "Anyone can call this (allows automated cleanup)."
+            ],
+            "name": "refund",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "get_escrow",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "EscrowData"
+                }
+            ]
+        },
+        {
+            "name": "get_validation_contract_address",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "Address"
+                }
+            ]
+        },
+        {
+            "name": "get_identity_contract_address",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "Address"
+                }
+            ]
+        }
+    ],
+    "events": [
+        {
+            "identifier": "escrow_deposited",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes",
+                    "indexed": true
+                },
+                {
+                    "name": "employer",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "identifier": "escrow_released",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes",
+                    "indexed": true
+                },
+                {
+                    "name": "receiver",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "identifier": "escrow_refunded",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes",
+                    "indexed": true
+                },
+                {
+                    "name": "employer",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ]
+        }
+    ],
+    "esdtAttributes": [],
+    "hasCallback": false,
+    "types": {
+        "EscrowData": {
+            "type": "struct",
+            "docs": [
+                "On-chain escrow record."
+            ],
+            "fields": [
+                {
+                    "name": "employer",
+                    "type": "Address"
+                },
+                {
+                    "name": "receiver",
+                    "type": "Address"
+                },
+                {
+                    "name": "token_id",
+                    "type": "EgldOrEsdtTokenIdentifier"
+                },
+                {
+                    "name": "token_nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "poa_hash",
+                    "type": "bytes"
+                },
+                {
+                    "name": "deadline",
+                    "type": "u64"
+                },
+                {
+                    "name": "status",
+                    "type": "EscrowStatus"
+                }
+            ]
+        },
+        "EscrowStatus": {
+            "type": "enum",
+            "docs": [
+                "Escrow settlement status."
+            ],
+            "variants": [
+                {
+                    "name": "Active",
+                    "discriminant": 0
+                },
+                {
+                    "name": "Released",
+                    "discriminant": 1
+                },
+                {
+                    "name": "Refunded",
+                    "discriminant": 2
+                }
+            ]
+        }
+    }
+}

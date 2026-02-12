@@ -52,6 +52,8 @@ exports.CONFIG = {
             'erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu',
         REPUTATION_REGISTRY: process.env.REPUTATION_REGISTRY_ADDRESS ||
             'erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu',
+        ESCROW_CONTRACT: process.env.ESCROW_CONTRACT_ADDRESS ||
+            'erd1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq6gq4hu',
     },
     // External Services
     PROVIDERS: {
