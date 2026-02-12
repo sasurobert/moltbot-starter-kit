@@ -64,9 +64,10 @@ moltbot-starter-kit/
 │   ├── hiring.ts         ← Employer hiring flow
 │   ├── facilitator.ts    ← x402 facilitator client
 │   └── index.ts          ← Main agent loop
-├── scripts/              ← register.ts, update_manifest.ts
-├── tests/                ← 47+ unit tests
-└── config.json           ← Agent metadata
+├── scripts/              ← register.ts, update_manifest.ts, build_manifest.ts
+├── tests/                ← 68 unit tests (17 suites)
+├── agent.config.json     ← Agent on-chain state (nonce, services, metadata)
+└── manifest.config.json  ← Manifest blueprint (OASF skills, endpoints, contact)
 ```
 
 ## Environment Variables

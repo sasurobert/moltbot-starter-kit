@@ -87,16 +87,16 @@ async function main(): Promise<void> {
         console.log(`   Gateway:   ${gatewayUrl}`);
         console.log(`   Pin Size:  ${response.data.PinSize} bytes`);
 
-        // 4. Update config.json with the manifest URI
-        const configPath = path.resolve('config.json');
+        // 4. Update agent.config.json with the manifest URI
+        const configPath = path.resolve('agent.config.json');
         try {
             const configRaw = await fs.readFile(configPath, 'utf8');
             const config = JSON.parse(configRaw);
             config.manifestUri = ipfsUri;
             await fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf8');
-            console.log(`\n📝 Updated config.json with manifestUri: ${ipfsUri}`);
+            console.log(`\n📝 Updated agent.config.json with manifestUri: ${ipfsUri}`);
         } catch {
-            console.log(`\n⚠️  Could not update config.json. Manually set manifestUri to: ${ipfsUri}`);
+            console.log(`\n⚠️  Could not update agent.config.json. Manually set manifestUri to: ${ipfsUri}`);
         }
 
         console.log('\n🚀 Next: Register your agent with: npx ts-node scripts/register.ts');

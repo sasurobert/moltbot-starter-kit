@@ -1,23 +1,23 @@
-import {promises as fs} from 'fs';
+import { promises as fs } from 'fs';
 import * as path from 'path';
 
 async function main() {
   console.log('📦 preparing Skill Deployment...');
 
   // 1. Read Config
-  const configPath = path.resolve('config.json');
+  const configPath = path.resolve('agent.config.json');
   let config;
   try {
     config = JSON.parse(await fs.readFile(configPath, 'utf8'));
   } catch {
-    console.error('❌ config.json not found.');
+    console.error('❌ agent.config.json not found. See agent.config.example.json.');
     process.exit(1);
   }
 
   // 2. Validate Metadata
   console.log(`Agent: ${config.agentName}`);
   if (!config.capabilities || config.capabilities.length === 0) {
-    console.warn('⚠️  No capabilities listed in config.json!');
+    console.warn('⚠️  No capabilities listed in agent.config.json!');
   } else {
     console.log(`Capabilities: ${config.capabilities.join(', ')}`);
   }

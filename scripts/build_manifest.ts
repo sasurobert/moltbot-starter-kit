@@ -1,7 +1,7 @@
 /**
  * Build Agent Registration Manifest (registration-v1 JSON)
  *
- * Reads config.json and generates a complete MX-8004 registration manifest
+ * Reads manifest.config.json and generates a complete MX-8004 registration manifest
  * with OASF taxonomy validation.
  *
  * Usage: npx ts-node scripts/build_manifest.ts
@@ -75,20 +75,20 @@ async function main(): Promise<void> {
     console.log('📋 Building Agent Registration Manifest...\n');
 
     // 1. Load config
-    const configPath = path.resolve('config.json');
+    const configPath = path.resolve('manifest.config.json');
     let config: ManifestConfig;
 
     try {
         const raw = await fs.readFile(configPath, 'utf8');
         config = JSON.parse(raw) as ManifestConfig;
     } catch {
-        console.error('❌ Could not read config.json. Create one with agent details.');
-        console.error('   See: SKILL.md → Agent Registration Manifest');
+        console.error('❌ Could not read manifest.config.json. Create one with agent details.');
+        console.error('   See: manifest.config.example.json for the expected format.');
         process.exit(1);
     }
 
     if (!config.agentName) {
-        console.error('❌ config.json must have an "agentName" field.');
+        console.error('❌ manifest.config.json must have an "agentName" field.');
         process.exit(1);
     }
 

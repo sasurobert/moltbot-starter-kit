@@ -1,0 +1,23 @@
+{
+    "agentName": "Moltbot",
+    "nonce": 0,
+    "manifestUri": "",
+    "metadata": [
+        {
+            "key": "version",
+            "value": "1.0.0"
+        },
+        {
+            "key": "framework",
+            "value": "moltbot-starter-kit"
+        }
+    ],
+    "services": [
+        {
+            "service_id": 1,
+            "price": "1000000000000000000",
+            "token": "EGLD",
+            "nonce": 0
+        }
+    ]
+}

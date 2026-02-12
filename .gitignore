@@ -4,5 +4,6 @@ coverage/
 .env
 *.pem
 wallet.pem
-config.json
+agent.config.json
+manifest.config.json
 .DS_Store

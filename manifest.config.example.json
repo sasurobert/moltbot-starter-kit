@@ -1,0 +1,48 @@
+{
+    "agentName": "Moltbot",
+    "description": "MultiversX AI Agent — powered by MX-8004",
+    "version": "1.0.0",
+    "services": [
+        {
+            "name": "MCP",
+            "endpoint": "http://localhost:3001",
+            "version": "1.0.0"
+        },
+        {
+            "name": "A2A",
+            "endpoint": "http://localhost:3002",
+            "version": "1.0.0"
+        }
+    ],
+    "oasf": {
+        "skills": [
+            {
+                "category": "Development",
+                "items": [
+                    "code_generation",
+                    "code_review"
+                ]
+            },
+            {
+                "category": "Data",
+                "items": [
+                    "data_analysis"
+                ]
+            }
+        ],
+        "domains": [
+            {
+                "category": "Technology",
+                "items": [
+                    "blockchain",
+                    "software_engineering"
+                ]
+            }
+        ]
+    },
+    "contact": {
+        "email": "agent@example.com",
+        "website": "https://example.com"
+    },
+    "x402Support": true
+}

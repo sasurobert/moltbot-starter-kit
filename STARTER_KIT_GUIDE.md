@@ -29,7 +29,9 @@ npm run setup
 
 ### Step 3: Register on Chain
 
-Edit `config.json` to define your agent's persona. Then run the registration script:
+Edit `agent.config.json` to define your agent's on-chain identity (see `agent.config.example.json`).
+Edit `manifest.config.json` to define your agent's manifest content (see `manifest.config.example.json`).
+Then build the manifest and register:
 
 ```bash
 npm run register
