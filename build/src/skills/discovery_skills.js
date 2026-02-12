@@ -110,7 +110,9 @@ async function getBalance(address) {
     // ESDTs
     let tokens = [];
     try {
-        const resp = await axios_1.default.get(`${apiUrl}/accounts/${targetAddress}/tokens`, { timeout: config_1.CONFIG.REQUEST_TIMEOUT });
+        const resp = await axios_1.default.get(`${apiUrl}/accounts/${targetAddress}/tokens`, {
+            timeout: config_1.CONFIG.REQUEST_TIMEOUT,
+        });
         tokens = resp.data || [];
     }
     catch {

@@ -1,4 +1,4 @@
-import { UserSigner } from '@multiversx/sdk-wallet';
+import {UserSigner} from '@multiversx/sdk-wallet';
 import {
   ApiNetworkProvider,
   ProxyNetworkProvider,
@@ -25,13 +25,13 @@ import {
   U64Type,
   U64Value,
 } from '@multiversx/sdk-core';
-import { promises as fs } from 'fs';
+import {promises as fs} from 'fs';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import axios from 'axios';
-import { createHash } from 'crypto';
-import { CONFIG } from '../src/config';
-import { RelayerAddressCache } from '../src/utils/RelayerAddressCache';
+import {createHash} from 'crypto';
+import {CONFIG} from '../src/config';
+import {RelayerAddressCache} from '../src/utils/RelayerAddressCache';
 
 dotenv.config();
 
@@ -119,7 +119,7 @@ async function main() {
     pricing: string;
     capabilities: string[];
     manifestUri: string;
-    metadata: Array<{ key: string; value: string }>;
+    metadata: Array<{key: string; value: string}>;
     services: Array<{
       service_id: number;
       price: string;
@@ -138,7 +138,9 @@ async function main() {
   try {
     config = JSON.parse(await fs.readFile(configPath, 'utf8'));
   } catch {
-    console.warn('agent.config.json not found, using defaults. See agent.config.example.json.');
+    console.warn(
+      'agent.config.json not found, using defaults. See agent.config.example.json.',
+    );
   }
   console.log(`Registering Agent: ${config.agentName}...`);
 
@@ -170,7 +172,7 @@ async function main() {
   const publicKeyHex = senderAddress.toHex();
 
   // Prepare metadata args: each entry is {key: Buffer, value: Buffer}
-  const metadataArgs: Array<{ key: Buffer; value: Buffer }> = [];
+  const metadataArgs: Array<{key: Buffer; value: Buffer}> = [];
   if (config.metadata && config.metadata.length > 0) {
     for (const entry of config.metadata) {
       const keyBuf = Buffer.from(entry.key);
@@ -180,7 +182,7 @@ async function main() {
       } else {
         valueBuf = Buffer.from(entry.value);
       }
-      metadataArgs.push({ key: keyBuf, value: valueBuf });
+      metadataArgs.push({key: keyBuf, value: valueBuf});
     }
   }
 
@@ -253,7 +255,7 @@ async function main() {
     console.log('Empty wallet detected. Using Relayer fallback...');
     try {
       // A. Get Challenge
-      const { data: challenge } = await axios.post(
+      const {data: challenge} = await axios.post(
         `${CONFIG.PROVIDERS.RELAYER_URL}/challenge`,
         {
           address: senderAddress.toBech32(),
@@ -271,7 +273,7 @@ async function main() {
       if (!relayerAddressBech32) {
         console.log('Fetching Relayer Address for Shard...');
         try {
-          const { data } = await axios.get(
+          const {data} = await axios.get(
             `${CONFIG.PROVIDERS.RELAYER_URL}/relayer/address/${senderAddress.toBech32()}`,
           );
           relayerAddressBech32 = data.relayerAddress;
@@ -305,7 +307,7 @@ async function main() {
 
       // C. Relay
       console.log('Broadcasting via Relayer...');
-      const { data: relayResult } = await axios.post(
+      const {data: relayResult} = await axios.post(
         `${CONFIG.PROVIDERS.RELAYER_URL}/relay`,
         {
           transaction: tx.toPlainObject(),
@@ -318,7 +320,7 @@ async function main() {
         `Check Explorer: ${CONFIG.EXPLORER_URL}/transactions/${relayResult.txHash}`,
       );
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { error?: string } }; message?: string };
+      const err = e as {response?: {data?: {error?: string}}; message?: string};
       console.error(
         'Relaying failed:',
         err.response?.data?.error || err.message,

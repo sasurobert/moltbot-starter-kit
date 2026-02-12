@@ -108,7 +108,7 @@ async function main() {
     console.log(`✅ Manifest written to ${outputPath}`);
     console.log(`   Name: ${manifest.name}`);
     console.log(`   Version: ${manifest.version}`);
-    console.log(`   Services: ${manifest.services.map((s) => s.name).join(', ') || 'none'}`);
+    console.log(`   Services: ${manifest.services.map(s => s.name).join(', ') || 'none'}`);
     console.log(`   Skills: ${manifest.oasf.skills.length} categories`);
     console.log(`   Domains: ${manifest.oasf.domains.length} categories`);
     console.log(`   x402 Support: ${manifest.x402Support}`);
@@ -120,7 +120,7 @@ async function main() {
     }
     console.log('\n📌 Next: Pin to IPFS with: npx ts-node scripts/pin_manifest.ts');
 }
-main().catch((err) => {
+main().catch(err => {
     console.error('❌ Failed to build manifest:', err);
     process.exit(1);
 });

@@ -1,4 +1,4 @@
-import { UserSigner } from '@multiversx/sdk-wallet';
+import {UserSigner} from '@multiversx/sdk-wallet';
 import {
   Address,
   TransactionComputer,
@@ -27,10 +27,10 @@ import {
   ApiNetworkProvider,
   ProxyNetworkProvider,
 } from '@multiversx/sdk-network-providers';
-import { promises as fs } from 'fs';
+import {promises as fs} from 'fs';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
-import { CONFIG } from '../src/config';
+import {CONFIG} from '../src/config';
 
 dotenv.config();
 
@@ -71,7 +71,7 @@ async function main() {
     capabilities: string[];
     nonce: number;
     manifestUri: string;
-    metadata: Array<{ key: string; value: string }>;
+    metadata: Array<{key: string; value: string}>;
     services: Array<{
       service_id: number;
       price: string;
@@ -91,7 +91,9 @@ async function main() {
   }
 
   if (!config.nonce || config.nonce === 0) {
-    console.error('❌ Agent nonce not found in agent.config.json. Register first.');
+    console.error(
+      '❌ Agent nonce not found in agent.config.json. Register first.',
+    );
     process.exit(1);
   }
 
@@ -152,7 +154,7 @@ async function main() {
   let tokenId = '';
   try {
     const queryResponse = await provider.queryContract({
-      address: { bech32: () => registryAddress },
+      address: {bech32: () => registryAddress},
       func: 'get_agent_token_id',
       getEncodedArguments: () => [],
     });
@@ -200,7 +202,7 @@ async function main() {
     gasLimit: BigInt(CONFIG.GAS_LIMITS.REGISTER),
     tokenTransfers: [
       new TokenTransfer({
-        token: new Token({ identifier: tokenId, nonce: BigInt(config.nonce) }),
+        token: new Token({identifier: tokenId, nonce: BigInt(config.nonce)}),
         amount: 1n,
       }),
     ],

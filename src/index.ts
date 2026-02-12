@@ -1,15 +1,15 @@
 import * as dotenv from 'dotenv';
 import axios from 'axios';
-import { UserSigner } from '@multiversx/sdk-wallet';
-import { promises as fs } from 'fs';
+import {UserSigner} from '@multiversx/sdk-wallet';
+import {promises as fs} from 'fs';
 import * as path from 'path';
-import { Facilitator } from './facilitator';
-import { McpBridge } from './mcp_bridge';
-import { Validator } from './validator';
-import { JobProcessor } from './processor';
-import { JobHandler } from './job_handler';
-import { CONFIG } from './config';
-import { Logger } from './utils/logger';
+import {Facilitator} from './facilitator';
+import {McpBridge} from './mcp_bridge';
+import {Validator} from './validator';
+import {JobProcessor} from './processor';
+import {JobHandler} from './job_handler';
+import {CONFIG} from './config';
+import {Logger} from './utils/logger';
 
 const logger = new Logger('Main');
 
@@ -47,7 +47,7 @@ async function main() {
     );
     const relayerResp = await axios.get(
       `${CONFIG.PROVIDERS.RELAYER_URL}/relayer/address/${myAddress}`,
-      { timeout: CONFIG.REQUEST_TIMEOUT },
+      {timeout: CONFIG.REQUEST_TIMEOUT},
     );
     const relayerAddress = relayerResp.data?.relayerAddress;
 

@@ -29,9 +29,7 @@ describe('Reputation Skills', () => {
             expect(rep.totalFeedbacks).toBe(10n);
         });
         it('should return 0 when agent has no reputation', async () => {
-            mockQuery
-                .mockResolvedValueOnce([0n])
-                .mockResolvedValueOnce([0n]);
+            mockQuery.mockResolvedValueOnce([0n]).mockResolvedValueOnce([0n]);
             const rep = await (0, reputation_skills_1.getReputation)(999);
             expect(rep.score).toBe(0n);
             expect(rep.totalFeedbacks).toBe(0n);
@@ -43,9 +41,7 @@ describe('Reputation Skills', () => {
             expect(rep.totalFeedbacks).toBe(0n);
         });
         it('should query with correct function names', async () => {
-            mockQuery
-                .mockResolvedValueOnce([0n])
-                .mockResolvedValueOnce([0n]);
+            mockQuery.mockResolvedValueOnce([0n]).mockResolvedValueOnce([0n]);
             await (0, reputation_skills_1.getReputation)(5);
             expect(mockQuery).toHaveBeenCalledTimes(2);
             expect(mockQuery).toHaveBeenCalledWith(expect.objectContaining({ function: 'get_reputation_score' }));

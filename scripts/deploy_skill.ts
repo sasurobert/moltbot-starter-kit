@@ -1,4 +1,4 @@
-import { promises as fs } from 'fs';
+import {promises as fs} from 'fs';
 import * as path from 'path';
 
 async function main() {
@@ -10,7 +10,9 @@ async function main() {
   try {
     config = JSON.parse(await fs.readFile(configPath, 'utf8'));
   } catch {
-    console.error('❌ agent.config.json not found. See agent.config.example.json.');
+    console.error(
+      '❌ agent.config.json not found. See agent.config.example.json.',
+    );
     process.exit(1);
   }
 

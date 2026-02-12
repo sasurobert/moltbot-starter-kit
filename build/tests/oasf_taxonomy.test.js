@@ -51,7 +51,9 @@ describe('OASF Taxonomy', () => {
         it('should pass for valid OASF', () => {
             const errors = (0, oasf_taxonomy_1.validateOASF)({
                 schemaVersion: '0.8.0',
-                skills: [{ category: 'Blockchain Operations', items: ['transaction_signing'] }],
+                skills: [
+                    { category: 'Blockchain Operations', items: ['transaction_signing'] },
+                ],
                 domains: [{ category: 'Finance & Business', items: ['defi'] }],
             });
             expect(errors).toHaveLength(0);

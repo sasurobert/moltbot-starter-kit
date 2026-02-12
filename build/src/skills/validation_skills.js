@@ -111,7 +111,10 @@ async function submitProof(params) {
         contract: registry,
         function: 'submit_proof',
         gasLimit: config_1.CONFIG.GAS_LIMITS.SUBMIT_PROOF,
-        arguments: [Buffer.from(params.jobId), Buffer.from(params.proofHash, 'hex')],
+        arguments: [
+            Buffer.from(params.jobId),
+            Buffer.from(params.proofHash, 'hex'),
+        ],
     });
     const account = await provider.getAccount({
         bech32: () => senderAddress.toBech32(),
@@ -123,7 +126,8 @@ async function submitProof(params) {
         if (relayerAddr) {
             tx.relayer = sdk_core_1.Address.newFromBech32(relayerAddr);
             tx.version = 2;
-            tx.gasLimit = BigInt(tx.gasLimit.toString()) + config_1.CONFIG.RELAYER_GAS_OVERHEAD;
+            tx.gasLimit =
+                BigInt(tx.gasLimit.toString()) + config_1.CONFIG.RELAYER_GAS_OVERHEAD;
         }
     }
     const computer = new sdk_core_1.TransactionComputer();

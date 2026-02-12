@@ -1,4 +1,9 @@
 "use strict";
+/**
+ * Unit tests for Identity Skills
+ *
+ * Mocks SDK to test logic without live chain.
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 // Mock the entrypoint + ABI utilities
 const mockQuery = jest.fn();

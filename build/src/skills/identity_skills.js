@@ -100,7 +100,8 @@ async function registerAgent(params) {
         if (relayerAddr) {
             tx.relayer = relayerAddr;
             tx.version = 2;
-            tx.gasLimit = BigInt(tx.gasLimit.toString()) + config_1.CONFIG.RELAYER_GAS_OVERHEAD;
+            tx.gasLimit =
+                BigInt(tx.gasLimit.toString()) + config_1.CONFIG.RELAYER_GAS_OVERHEAD;
         }
     }
     // Sign & Send
