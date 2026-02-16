@@ -55,5 +55,3 @@ npm run build
 
 echo ""
 echo "✅ Setup complete!"
-echo "   Register: npm run register"
-echo "   Start:    npm start"

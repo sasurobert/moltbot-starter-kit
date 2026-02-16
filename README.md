@@ -14,16 +14,31 @@ A fully functional, hardened implementation of an OpenClaw Agent with a comprehe
 
 ## Quick Start
 
+### 1. Installation
+
+Clone the repository and run the setup script:
+
 ```bash
-git clone https://github.com/sasurobert/moltbot-starter-kit.git
+git clone https://github.com/sergiuosvat/moltbot-starter-kit.git
 cd moltbot-starter-kit
 chmod +x setup.sh && ./setup.sh
 ```
 
-Or install via the OpenClaw one-liner (includes SKILL.md + references):
+**Alternative:** Install via the OpenClaw one-liner (includes SKILL.md + references):
 ```bash
-curl -sL https://raw.githubusercontent.com/sasurobert/multiversx-openclaw-skills/main/scripts/install.sh | bash
+curl -sL https://raw.githubusercontent.com/sergiuosvat/moltbot-starter-kit/main/scripts/install.sh | bash
 ```
+
+### 2. Configuration
+
+Define your agent's identity and capabilities by creating a `manifest.config.json` file. You should implement the following **User Inputs** in this file:
+
+- **Agent Name** (`agentName`): The display name of your agent.
+- **Description** (`description`): A short bio explaining what your agent does.
+- **Services** (`services`): The endpoints (e.g., MCP, A2A) where your agent can be reached.
+- **Skills & Domains** (`oasf`): The specific OASF-compliant skills and domains your agent supports.
+
+> Copy `manifest.config.example.json` to `manifest.config.json` to get started.
 
 ## Skills Library
 
