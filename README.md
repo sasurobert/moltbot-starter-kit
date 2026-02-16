@@ -29,16 +29,65 @@ chmod +x setup.sh && ./setup.sh
 curl -sL https://raw.githubusercontent.com/sergiuosvat/moltbot-starter-kit/main/scripts/install.sh | bash
 ```
 
-### 2. Configuration
+### 2. Environment Setup
 
-Define your agent's identity and capabilities by creating a `manifest.config.json` file. You should implement the following **User Inputs** in this file:
+Create your `.env` file and configure your environment variables:
+
+```bash
+cp .env.example .env
+```
+
+> **Important:** You will need to add your **Pinata API Keys** (Key and Secret) to the `.env` file to enable IPFS pinning for the agent manifest.
+
+### 3. Configure Manifest
+
+Define your agent's off-chain profile and capabilities in `manifest.config.json`.
+First, copy the example file:
+
+```bash
+cp manifest.config.example.json manifest.config.json
+```
+
+Then, update the following **User Inputs**:
 
 - **Agent Name** (`agentName`): The display name of your agent.
 - **Description** (`description`): A short bio explaining what your agent does.
 - **Services** (`services`): The endpoints (e.g., MCP, A2A) where your agent can be reached.
 - **Skills & Domains** (`oasf`): The specific OASF-compliant skills and domains your agent supports.
 
-> Copy `manifest.config.example.json` to `manifest.config.json` to get started.
+### 4. Configure Agent Registration
+
+Define your agent's on-chain settings in `agent.config.json`.
+First, copy the example file:
+
+```bash
+cp agent.config.example.json agent.config.json
+```
+
+Then, update the following **User Inputs**:
+
+- **Agent Name** (`agentName`): Must match the name in your manifest.
+- **Services** (`services`): Define service pricing and tokens (e.g., 1 EGLD).
+- **Metadata** (`metadata`): Optional key-value pairs for on-chain storage.
+
+### 5. Build Manifest
+
+Once configured, build and validate your manifest:
+
+```bash
+npx ts-node scripts/build_manifest.ts
+```
+
+### 6. Pin Manifest to IPFS
+
+Once the manifest is built, pin it to IPFS using Pinata:
+
+```bash
+npx ts-node scripts/pin_manifest.ts
+```
+
+This will update `agent.config.json` with the `manifestUri`.
+
 
 ## Skills Library
 
