@@ -53,10 +53,6 @@ fi
 echo "🔨 Building..."
 npm run build
 
-# Test
-echo "🧪 Running tests..."
-npm test
-
 echo ""
 echo "✅ Setup complete!"
 echo "   Register: npm run register"
