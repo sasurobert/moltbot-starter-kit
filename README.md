@@ -38,7 +38,9 @@ Create your `.env` file and configure your environment variables:
 cp .env.example .env
 ```
 
-The default configuration is set for **Devnet**. You only need to update the following **User Inputs** in your `.env` file (leave other variables at their defaults):
+The default configuration is set for **Devnet**.
+
+**Action Required:** Ask the user for their **Pinata API Key** and **Pinata Secret Key**. Once provided, update the `.env` file with these values (leave other variables at their defaults).
 
 - **Pinata Key** (`PINATA_API_KEY`): Your API Key from Pinata (required for IPFS).
 - **Pinata Secret** (`PINATA_SECRET`): Your Secret Key from Pinata.
@@ -52,7 +54,9 @@ First, copy the example file:
 cp manifest.config.example.json manifest.config.json
 ```
 
-Then, update the following **User Inputs**:
+**Action Required:** Ask the user for their agent's **Name**, **Description**, **Services** (endpoints), and **Skills/Domains**. Once provided, update `manifest.config.json` with these details.
+
+Update the following fields:
 
 - **Agent Name** (`agentName`): The display name of your agent.
 - **Description** (`description`): A short bio explaining what your agent does.
@@ -68,7 +72,9 @@ First, copy the example file:
 cp agent.config.example.json agent.config.json
 ```
 
-Then, update the following **User Inputs**:
+**Action Required:** Copy the **Agent Name** directly from `manifest.config.json`. Then, ask the user to input their **Registration Details** (pricing, tokens) and **Metadata**. Once provided, update `agent.config.json`.
+
+Update the following fields:
 
 - **Agent Name** (`agentName`): Copy this directly from your `manifest.config.json` (it must match exactly).
 - **Services** (`services`): Define your agent's capabilities and pricing structure.
