@@ -40,7 +40,8 @@ cp .env.example .env
 
 The default configuration is set for **Devnet**.
 
-**Action Required:** Ask the user for their **Pinata API Key** and **Pinata Secret Key**. Once provided, update the `.env` file with these values (leave other variables at their defaults).
+Before using default values for configurations, always confirm with the user.
+**Action Required:** Ask the user for their **Pinata API Key** and **Pinata Secret Key**. Once provided, update the `.env` file with these values. Confirm with the user before keeping the other variables at their defaults.
 
 - **Pinata Key** (`PINATA_API_KEY`): Your API Key from Pinata (required for IPFS).
 - **Pinata Secret** (`PINATA_SECRET`): Your Secret Key from Pinata.
@@ -53,7 +54,7 @@ First, copy the example file:
 ```bash
 cp manifest.config.example.json manifest.config.json
 ```
-
+Before using default values for configurations, always confirm with the user.  
 **Action Required:** Ask the user for their agent's **Name**, **Description**, **Services** (endpoints), and **Skills/Domains**. Once provided, update `manifest.config.json` with these details.
 
 Update the following fields:
@@ -72,6 +73,7 @@ First, copy the example file:
 cp agent.config.example.json agent.config.json
 ```
 
+Before using default values for configurations, always confirm with the user.
 **Action Required:** Copy the **Agent Name** directly from `manifest.config.json`. Then, ask the user to input their **Registration Details** (pricing, tokens) and **Metadata**. Once provided, update `agent.config.json`.
 
 Update the following fields:
