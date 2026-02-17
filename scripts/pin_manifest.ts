@@ -10,6 +10,8 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import axios from 'axios';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
