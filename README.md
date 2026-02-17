@@ -16,7 +16,7 @@ A fully functional, hardened implementation of an OpenClaw Agent with a comprehe
 
 Install via the OpenClaw one-liner (includes SKILL.md + references):
 ```bash
-curl -sL https://raw.githubusercontent.com/sergiuosvat/multiversx-openclaw-skills/master/scripts/install.sh | bash
+curl -sL https://raw.githubusercontent.com/sasurobert/multiversx-openclaw-skills/master/scripts/install.sh | bash
 ```
 
 ## Quick Start
