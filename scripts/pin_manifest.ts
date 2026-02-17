@@ -89,19 +89,19 @@ async function main(): Promise<void> {
     console.log(`   Gateway:   ${gatewayUrl}`);
     console.log(`   Pin Size:  ${response.data.PinSize} bytes`);
 
-    // 4. Update agent.config.json with the manifest URI
+    // 4. Update agent.config.json with the gateway URL
     const configPath = path.resolve('agent.config.json');
     try {
       const configRaw = await fs.readFile(configPath, 'utf8');
       const config = JSON.parse(configRaw);
-      config.manifestUri = ipfsUri;
+      config.manifestUri = gatewayUrl;
       await fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf8');
       console.log(
-        `\n📝 Updated agent.config.json with manifestUri: ${ipfsUri}`,
+        `\n📝 Updated agent.config.json with manifestUri: ${gatewayUrl}`,
       );
     } catch {
       console.log(
-        `\n⚠️  Could not update agent.config.json. Manually set manifestUri to: ${ipfsUri}`,
+        `\n⚠️  Could not update agent.config.json. Manually set manifestUri to: ${gatewayUrl}`,
       );
     }
   } catch (error) {
