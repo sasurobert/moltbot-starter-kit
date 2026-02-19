@@ -39,7 +39,7 @@ export const CONFIG = {
 
   // Transaction Settings
   GAS_LIMITS: {
-    REGISTER: 15_000_000n,
+    REGISTER: 25_000_000n,
     UPDATE: 10_000_000n,
     SUBMIT_PROOF: 10_000_000n,
     REGISTER_AGENT: BigInt(process.env.GAS_LIMIT_REGISTER_AGENT || '6000000'),
