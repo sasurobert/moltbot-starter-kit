@@ -6,7 +6,30 @@
         {
             "name": "MCP",
             "endpoint": "http://localhost:3001",
-            "version": "1.0.0"
+            "version": "1.0.0",
+            "offerings": [
+                {
+                    "serviceId": 1,
+                    "name": "Code Review",
+                    "description": "AI-powered code review with security analysis and best practice suggestions",
+                    "sla": 30,
+                    "requirements": {
+                        "type": "object",
+                        "properties": {
+                            "repo_url": { "type": "string", "description": "Repository URL to review" },
+                            "branch": { "type": "string", "description": "Branch name (defaults to main)" }
+                        },
+                        "required": ["repo_url"]
+                    },
+                    "deliverables": {
+                        "type": "object",
+                        "properties": {
+                            "report": { "type": "string", "description": "Review report in markdown" },
+                            "severity_score": { "type": "number", "description": "Overall severity 0-100" }
+                        }
+                    }
+                }
+            ]
         },
         {
             "name": "A2A",
