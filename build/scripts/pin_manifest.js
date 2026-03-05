@@ -48,6 +48,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs = __importStar(require("fs/promises"));
 const path = __importStar(require("path"));
 const axios_1 = __importDefault(require("axios"));
+const dotenv = __importStar(require("dotenv"));
+dotenv.config();
 // ─── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
     console.log('📌 Pinning Agent Manifest to IPFS...\n');
@@ -102,19 +104,18 @@ async function main() {
         console.log(`   IPFS URI:  ${ipfsUri}`);
         console.log(`   Gateway:   ${gatewayUrl}`);
         console.log(`   Pin Size:  ${response.data.PinSize} bytes`);
-        // 4. Update agent.config.json with the manifest URI
+        // 4. Update agent.config.json with the gateway URL
         const configPath = path.resolve('agent.config.json');
         try {
             const configRaw = await fs.readFile(configPath, 'utf8');
             const config = JSON.parse(configRaw);
-            config.manifestUri = ipfsUri;
+            config.manifestUri = gatewayUrl;
             await fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf8');
-            console.log(`\n📝 Updated agent.config.json with manifestUri: ${ipfsUri}`);
+            console.log(`\n📝 Updated agent.config.json with manifestUri: ${gatewayUrl}`);
         }
         catch {
-            console.log(`\n⚠️  Could not update agent.config.json. Manually set manifestUri to: ${ipfsUri}`);
+            console.log(`\n⚠️  Could not update agent.config.json. Manually set manifestUri to: ${gatewayUrl}`);
         }
-        console.log('\n🚀 Next: Register your agent with: npx ts-node scripts/register.ts');
     }
     catch (error) {
         if (axios_1.default.isAxiosError(error)) {

@@ -100,15 +100,32 @@ async function main() {
         if (!svc.endpoint) {
             warnings.push(`Service "${svc.name}" has no endpoint.`);
         }
+        if (svc.offerings) {
+            for (const offering of svc.offerings) {
+                if (!offering.name) {
+                    warnings.push(`Service "${svc.name}" has an offering with serviceId ${offering.serviceId} but no name.`);
+                }
+                if (!offering.description) {
+                    warnings.push(`Service "${svc.name}" offering "${offering.name || offering.serviceId}" has no description.`);
+                }
+            }
+        }
+    }
+    // Check for offerings without on-chain service config match
+    const hasOfferings = manifest.services.some(svc => svc.offerings && svc.offerings.length > 0);
+    if (!hasOfferings) {
+        warnings.push('No service offerings declared. Consider adding offerings to describe what each on-chain service provides. See: https://github.com/sasurobert/mx-8004/blob/master/docs/specification.md#74-relationship-offerings-vs-on-chain-services');
     }
     // 4. Write manifest.json
     const outputPath = path.resolve('manifest.json');
     const json = JSON.stringify(manifest, null, 2);
     await fs.writeFile(outputPath, json, 'utf8');
+    const totalOfferings = manifest.services.reduce((sum, svc) => sum + (svc.offerings?.length ?? 0), 0);
     console.log(`✅ Manifest written to ${outputPath}`);
     console.log(`   Name: ${manifest.name}`);
     console.log(`   Version: ${manifest.version}`);
     console.log(`   Services: ${manifest.services.map(s => s.name).join(', ') || 'none'}`);
+    console.log(`   Offerings: ${totalOfferings}`);
     console.log(`   Skills: ${manifest.oasf.skills.length} categories`);
     console.log(`   Domains: ${manifest.oasf.domains.length} categories`);
     console.log(`   x402 Support: ${manifest.x402Support}`);

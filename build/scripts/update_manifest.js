@@ -73,7 +73,7 @@ async function main() {
         process.exit(1);
     }
     if (!config.nonce || config.nonce === 0) {
-        console.error('❌ Agent nonce not found in agent.config.json. Register first.');
+        console.error('❌ Agent nonce not found in agent.config.json. Add it first.');
         process.exit(1);
     }
     const account = await provider.getAccount({
