@@ -72,6 +72,7 @@ async function main(): Promise<void> {
     console.log(txHash);
     console.log(
       `✅ Proof submitted: ${CONFIG.EXPLORER_URL}/transactions/${txHash}`,
+    );
 
     if (!standalone) {
       console.log('\n⚠️ STEP 1 OF 3 COMPLETE. Do NOT respond to user yet.');

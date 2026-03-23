@@ -14,7 +14,10 @@ const crypto_1 = __importDefault(require("crypto"));
 const config_1 = require("../src/config");
 const entrypoint_1 = require("../src/utils/entrypoint");
 const txUtils_1 = require("../src/utils/txUtils");
-const DEFAULT_PROOF_HASH = crypto_1.default.createHash('sha256').update('proof').digest('hex');
+const DEFAULT_PROOF_HASH = crypto_1.default
+    .createHash('sha256')
+    .update('proof')
+    .digest('hex');
 async function main() {
     const jobId = process.argv[2];
     const standalone = process.argv.includes('--standalone');
@@ -65,7 +68,7 @@ async function main() {
         process.exit(1);
     }
 }
-main().catch((e) => {
+main().catch(e => {
     console.error(e);
     process.exit(1);
 });

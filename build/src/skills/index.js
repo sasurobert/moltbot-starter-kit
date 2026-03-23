@@ -6,7 +6,7 @@
  *   import { registerAgent, getBalance, buildManifest } from './skills';
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateOASF = exports.getAllDomainIds = exports.getAllSkillIds = exports.getDomainCategory = exports.getSkillCategory = exports.OASF_DOMAINS = exports.OASF_SKILLS = exports.OASF_SCHEMA_VERSION = exports.buildManifestJSON = exports.buildManifest = exports.hireAgent = exports.getBalance = exports.discoverAgents = exports.multiTransfer = exports.transfer = exports.getEscrow = exports.refund = exports.release = exports.deposit = exports.getReputation = exports.submitFeedback = exports.getJobData = exports.isJobVerified = exports.submitProof = exports.initJob = exports.setMetadata = exports.getAgent = exports.registerAgent = void 0;
+exports.MoltbotMppSkill = exports.validateOASF = exports.getAllDomainIds = exports.getAllSkillIds = exports.getDomainCategory = exports.getSkillCategory = exports.OASF_DOMAINS = exports.OASF_SKILLS = exports.OASF_SCHEMA_VERSION = exports.buildManifestJSON = exports.buildManifest = exports.hireAgent = exports.getBalance = exports.discoverAgents = exports.multiTransfer = exports.transfer = exports.getEscrow = exports.refund = exports.release = exports.deposit = exports.getReputation = exports.submitFeedback = exports.getJobData = exports.isJobVerified = exports.submitProof = exports.initJob = exports.setMetadata = exports.getAgent = exports.registerAgent = void 0;
 // Identity
 var identity_skills_1 = require("./identity_skills");
 Object.defineProperty(exports, "registerAgent", { enumerable: true, get: function () { return identity_skills_1.registerAgent; } });
@@ -53,4 +53,7 @@ Object.defineProperty(exports, "getDomainCategory", { enumerable: true, get: fun
 Object.defineProperty(exports, "getAllSkillIds", { enumerable: true, get: function () { return oasf_taxonomy_1.getAllSkillIds; } });
 Object.defineProperty(exports, "getAllDomainIds", { enumerable: true, get: function () { return oasf_taxonomy_1.getAllDomainIds; } });
 Object.defineProperty(exports, "validateOASF", { enumerable: true, get: function () { return oasf_taxonomy_1.validateOASF; } });
+// MPP Interceptor
+var mpp_skills_1 = require("./mpp_skills");
+Object.defineProperty(exports, "MoltbotMppSkill", { enumerable: true, get: function () { return mpp_skills_1.MoltbotMppSkill; } });
 //# sourceMappingURL=index.js.map

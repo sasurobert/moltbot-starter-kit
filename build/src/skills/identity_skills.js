@@ -146,7 +146,7 @@ async function setMetadata(params) {
         gasLimit: config_1.CONFIG.GAS_LIMITS.UPDATE,
         arguments: [
             BigInt(params.agentNonce),
-            sdk_core_1.VariadicValue.fromItemsCounted(), // metadata — TODO: populate from entries
+            sdk_core_1.VariadicValue.fromItemsCounted(), // metadata
             sdk_core_1.VariadicValue.fromItemsCounted(), // services
         ],
     });

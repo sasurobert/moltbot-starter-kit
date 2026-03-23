@@ -46,10 +46,26 @@ export async function getRelayerAddress(sender: Address): Promise<string> {
   return relayerAddress;
 }
 
+export interface ITransactionPlainObject {
+  nonce: number;
+  value: string;
+  receiver: string;
+  sender: string;
+  gasPrice: number;
+  gasLimit: number;
+  data?: string;
+  signature?: string;
+  chainID: string;
+  version: number;
+  options?: number;
+}
+
 /**
  * Standard relay function.
  */
-export async function relayTransaction(txPlain: any): Promise<string> {
+export async function relayTransaction(
+  txPlain: ITransactionPlainObject,
+): Promise<string> {
   const relayerBase = CONFIG.PROVIDERS.RELAYER_URL;
   const url = `${relayerBase.replace(/\/$/, '')}/relay`;
 

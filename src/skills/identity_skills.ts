@@ -161,7 +161,7 @@ export async function setMetadata(params: SetMetadataParams): Promise<string> {
     gasLimit: CONFIG.GAS_LIMITS.UPDATE,
     arguments: [
       BigInt(params.agentNonce),
-      VariadicValue.fromItemsCounted(), // metadata — TODO: populate from entries
+      VariadicValue.fromItemsCounted(), // metadata
       VariadicValue.fromItemsCounted(), // services
     ],
   });

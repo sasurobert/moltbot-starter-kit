@@ -89,6 +89,7 @@ async function main(): Promise<void> {
     console.log(`REQUEST_HASH=${requestHash}`);
     console.log(
       `✅ Validation request sent: ${CONFIG.EXPLORER_URL}/transactions/${txHash}`,
+    );
 
     console.log(
       '\n⚠️ STEP 2 OF 3 COMPLETE. Run validation-response.ts NOW before responding to user:',

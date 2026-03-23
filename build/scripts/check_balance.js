@@ -7,7 +7,8 @@ const txUtils_1 = require("../src/utils/txUtils");
 async function main() {
     try {
         const signer = (0, txUtils_1.getSigner)();
-        const address = new sdk_core_1.Address(signer.getAddress().bech32());
+        const userAddress = signer.getAddress();
+        const address = new sdk_core_1.Address(userAddress.bech32());
         const entrypoint = (0, entrypoint_1.createEntrypoint)();
         const provider = entrypoint.createNetworkProvider();
         const account = await provider.getAccount(address);
