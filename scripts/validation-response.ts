@@ -86,11 +86,11 @@ async function main(): Promise<void> {
     const txHash = await relayTransaction(tx.toPlainObject());
     console.log(txHash);
     console.log(
-      `✅ Validation response sent (score: ${score}): ${CONFIG.EXPLORER_URL}/transactions/${txHash}`
+      `✅ Validation response sent (score: ${score}): ${CONFIG.EXPLORER_URL}/transactions/${txHash}`,
     );
 
     console.log(
-      '\n✅ FLOW COMPLETE (3/3). Proof submitted and validated on-chain.'
+      '\n✅ FLOW COMPLETE (3/3). Proof submitted and validated on-chain.',
     );
   } catch (err) {
     console.error('❌ Relay failed:', (err as Error).message);

@@ -36,18 +36,28 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.AgentDiscovery = exports.Logger = exports.CONFIG = exports.JobHandler = exports.JobProcessor = exports.Validator = exports.McpBridge = exports.Facilitator = void 0;
 const dotenv = __importStar(require("dotenv"));
 const axios_1 = __importDefault(require("axios"));
 const sdk_wallet_1 = require("@multiversx/sdk-wallet");
 const fs_1 = require("fs");
 const path = __importStar(require("path"));
 const facilitator_1 = require("./facilitator");
+Object.defineProperty(exports, "Facilitator", { enumerable: true, get: function () { return facilitator_1.Facilitator; } });
 const mcp_bridge_1 = require("./mcp_bridge");
+Object.defineProperty(exports, "McpBridge", { enumerable: true, get: function () { return mcp_bridge_1.McpBridge; } });
 const validator_1 = require("./validator");
+Object.defineProperty(exports, "Validator", { enumerable: true, get: function () { return validator_1.Validator; } });
 const processor_1 = require("./processor");
+Object.defineProperty(exports, "JobProcessor", { enumerable: true, get: function () { return processor_1.JobProcessor; } });
 const job_handler_1 = require("./job_handler");
+Object.defineProperty(exports, "JobHandler", { enumerable: true, get: function () { return job_handler_1.JobHandler; } });
 const config_1 = require("./config");
+Object.defineProperty(exports, "CONFIG", { enumerable: true, get: function () { return config_1.CONFIG; } });
 const logger_1 = require("./utils/logger");
+Object.defineProperty(exports, "Logger", { enumerable: true, get: function () { return logger_1.Logger; } });
+const discovery_1 = require("./discovery");
+Object.defineProperty(exports, "AgentDiscovery", { enumerable: true, get: function () { return discovery_1.AgentDiscovery; } });
 const logger = new logger_1.Logger('Main');
 dotenv.config();
 async function main() {

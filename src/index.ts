@@ -10,6 +10,18 @@ import {JobProcessor} from './processor';
 import {JobHandler} from './job_handler';
 import {CONFIG} from './config';
 import {Logger} from './utils/logger';
+import {AgentDiscovery} from './discovery';
+
+export {
+  Facilitator,
+  McpBridge,
+  Validator,
+  JobProcessor,
+  JobHandler,
+  CONFIG,
+  Logger,
+  AgentDiscovery,
+};
 
 const logger = new Logger('Main');
 

@@ -1,4 +1,4 @@
-import { UserSigner } from "@multiversx/sdk-wallet";
+import { UserSigner } from '@multiversx/sdk-wallet';
 export interface AgentSpendingPolicy {
     dailyLimitFiat?: number;
     maxPerTransactionNative: bigint;

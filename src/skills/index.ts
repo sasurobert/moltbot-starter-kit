@@ -90,7 +90,4 @@ export {
 } from './oasf_taxonomy';
 
 // MPP Interceptor
-export {
-  MoltbotMppSkill,
-  type AgentSpendingPolicy,
-} from './mpp_skills';
+export {MoltbotMppSkill, type AgentSpendingPolicy} from './mpp_skills';
