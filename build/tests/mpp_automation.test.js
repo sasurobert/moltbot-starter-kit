@@ -7,6 +7,7 @@ describe('MPP Agent Automation Skills', () => {
     beforeEach(() => {
         mockIdentitySkill = {
             getAgentPricing: jest.fn(),
+            submitFeedback: jest.fn(),
         };
         mockMppSkill = {
             openSession: jest.fn(),

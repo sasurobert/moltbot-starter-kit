@@ -14,7 +14,7 @@ async function getNetworkConfig() {
         const response = await axios_1.default.get(`${config_1.CONFIG.API_URL}/network/config`);
         return response.data?.data?.config;
     }
-    catch (err) {
+    catch {
         logger.error('Failed to fetch network config');
         return null;
     }
@@ -27,7 +27,7 @@ async function getTransactionStatus(txHash) {
             status: response.data?.status || 'unknown',
         };
     }
-    catch (err) {
+    catch {
         return null;
     }
 }

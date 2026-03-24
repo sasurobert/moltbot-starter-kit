@@ -20,7 +20,7 @@ async function pingAgent(agentNonce) {
         const response = await fetch(url);
         return response.ok;
     }
-    catch (err) {
+    catch {
         return false;
     }
 }

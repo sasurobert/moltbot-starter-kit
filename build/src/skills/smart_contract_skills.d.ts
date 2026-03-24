@@ -10,5 +10,5 @@ export interface ContractExecuteParams {
     value?: bigint;
     gasLimit?: bigint;
 }
-export declare function queryContract(params: ContractQueryParams): Promise<any[]>;
+export declare function queryContract(params: ContractQueryParams): Promise<unknown[]>;
 export declare function executeContract(params: ContractExecuteParams): Promise<string>;

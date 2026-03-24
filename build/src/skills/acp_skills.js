@@ -12,7 +12,7 @@ async function browseAcpProducts(agentUrl) {
         const response = await axios_1.default.get(url);
         return response.data?.products || [];
     }
-    catch (err) {
+    catch {
         return [];
     }
 }
@@ -22,7 +22,7 @@ async function checkoutAcpProduct(agentUrl, productId, buyerAddress) {
         const response = await axios_1.default.post(url, { productId, buyerAddress });
         return response.data;
     }
-    catch (err) {
+    catch {
         return null;
     }
 }

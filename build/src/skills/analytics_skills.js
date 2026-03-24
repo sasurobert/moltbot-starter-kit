@@ -34,7 +34,7 @@ async function getAgentRevenue(address, daysBack = 30) {
         // Convert from EGLD (10^18) to float
         return Number(total) / 1e18;
     }
-    catch (err) {
+    catch {
         logger.error('Failed to parse analytics revenue');
         return 0;
     }
@@ -64,7 +64,7 @@ async function getAgentSpend(address, daysBack = 30) {
         }
         return Number(total) / 1e18;
     }
-    catch (err) {
+    catch {
         logger.error('Failed to parse analytics spend');
         return 0;
     }
