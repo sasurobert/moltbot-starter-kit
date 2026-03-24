@@ -235,6 +235,22 @@
     "erd1qwe499e8fdclpge3grlyzynmyjcneslsk8xdt43ufj4d42fuu9rs5nr7xa": {
       "relayerAddress": "erd14yqj2cx5wuv4hqsxl29pepufyv9frzs644lx4ra9r8weamvr44dszn2k8q",
       "timestamp": 1770994512859
+    },
+    "erd1vjta2pllnlesdlx498l5z24xlsx9paxktl5ggldu332j5e7347dq5hzy8w": {
+      "relayerAddress": "erd1ffnjw5wqapw7xyjjt2c68yzt5ym8mqmsyt3exrzlrrfyzd76w04q62ggd4",
+      "timestamp": 1774354597542
+    },
+    "erd1xw2nuhtwgxs8896xlucmwv4l252ggmeyhdmf77ndfjh7a6jmfufq54sa4y": {
+      "relayerAddress": "erd16n8etkmflcy2c235l6slc2agkpnkfrptk2kteguev38eyaq4kvnqvdfs6w",
+      "timestamp": 1774354619059
+    },
+    "erd18jrh9z9myyjdtsc69fvk6pw600g7usu3vdm9ktjuxcl2e48vwkeqeqchvn": {
+      "relayerAddress": "erd1ht5fcgc2ye7ht7r64us08auqz28q9ra72pmp64fj6jd46zrwjkmq38drtu",
+      "timestamp": 1774354670193
+    },
+    "erd1z0z7spkuxt2st3y5yznzmf2t5n66me5jljahkglrc66u3nvt7hequsxgyc": {
+      "relayerAddress": "erd1lt25ggfkfytdnp0lzvum5vcngvr3dhnxh7l82yeygyuj2tm2ujhq99ltd0",
+      "timestamp": 1774354941508
     }
   },
   "http://localhost:3004": {

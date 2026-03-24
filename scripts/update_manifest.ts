@@ -103,8 +103,11 @@ async function main() {
   // 4. Load ABI and build transaction using SmartContractTransactionsFactory
   const abiPath = path.resolve(__dirname, '..', 'identity-registry.abi.json');
   const rawAbiStr = (await fs.readFile(abiPath, 'utf8'))
-    .replace(/"TokenId"/g, '"TokenIdentifier"')
-    .replace(/"NonZeroBigUint"/g, '"BigUint"');
+    .replace(/\bTokenId\b/g, 'TokenIdentifier')
+    .replace(/\bNonZeroBigUint\b/g, 'BigUint')
+    .replace(/\bcounted-variadic\b/g, 'variadic')
+    .replace(/\bList</g, 'variadic<')
+    .replace(/\bPayment\b/g, 'EgldOrEsdtTokenPayment');
   const abiJson = JSON.parse(rawAbiStr);
   const abi = Abi.create(abiJson);
 
