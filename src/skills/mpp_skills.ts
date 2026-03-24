@@ -1,6 +1,7 @@
 import {UserSigner} from '@multiversx/sdk-wallet';
 import {Transaction, Address, TransactionComputer} from '@multiversx/sdk-core';
 import {ApiNetworkProvider} from '@multiversx/sdk-network-providers';
+import {keccak256} from 'js-sha3';
 
 export interface AgentSpendingPolicy {
   dailyLimitFiat?: number;
@@ -86,5 +87,62 @@ export class MoltbotMppSkill {
     }
 
     return txHash;
+  }
+
+  /**
+   * Generates a deterministic channel ID for a session.
+   */
+  computeChannelId(
+    receiver: string,
+    token: string,
+    nonce: number | bigint = 0n,
+  ): string {
+    const employer = this.signer.getAddress().bech32();
+    const employerAddr = Address.newFromBech32(employer);
+    const receiverAddr = Address.newFromBech32(receiver);
+
+    const hasher = keccak256.create();
+    hasher.update(employerAddr.getPublicKey());
+    hasher.update(receiverAddr.getPublicKey());
+    hasher.update(Buffer.from(token));
+
+    // Nonce as 8 bytes big endian
+    const nonceBuf = Buffer.alloc(8);
+    nonceBuf.writeBigUInt64BE(BigInt(nonce));
+    hasher.update(nonceBuf);
+
+    return hasher.hex();
+  }
+
+  /**
+   * Signs an off-chain voucher for a session.
+   */
+  async signVoucher(
+    contractAddress: string,
+    channelId: string,
+    amount: bigint,
+    nonce: number,
+  ): Promise<string> {
+    const contract = Address.newFromBech32(contractAddress);
+
+    const hasher = keccak256.create();
+    hasher.update(Buffer.from('mpp-session-v1'));
+    hasher.update(contract.getPublicKey());
+    hasher.update(Buffer.from(channelId, 'hex'));
+
+    // Amount as 32 bytes big endian
+    const amountBuf = Buffer.alloc(32);
+    const amountHex = amount.toString(16).padStart(64, '0');
+    amountBuf.write(amountHex, 'hex');
+    hasher.update(amountBuf);
+
+    // Nonce as 8 bytes big endian
+    const nonceBuf = Buffer.alloc(8);
+    nonceBuf.writeBigUInt64BE(BigInt(nonce));
+    hasher.update(nonceBuf);
+
+    const message = Buffer.from(hasher.hex(), 'hex');
+    const signature = await this.signer.sign(message);
+    return signature.toString('hex');
   }
 }

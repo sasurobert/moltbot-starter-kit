@@ -27,7 +27,8 @@
     "@multiversx/sdk-network-providers": "^2.9.3",
     "@multiversx/sdk-wallet": "^4.6.0",
     "axios": "^1.6.0",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "js-sha3": "^0.9.3"
   },
   "devDependencies": {
     "@types/jest": "^29.0.0",
