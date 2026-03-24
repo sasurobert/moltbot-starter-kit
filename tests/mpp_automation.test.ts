@@ -4,12 +4,16 @@ import {
 } from '../src/skills/mpp_automation';
 
 describe('MPP Agent Automation Skills', () => {
-  let mockIdentitySkill: Record<string, unknown>;
-  let mockMppSkill: Record<string, unknown>;
+  let mockIdentitySkill: {
+    getAgentPricing: jest.Mock;
+    submitFeedback: jest.Mock;
+  };
+  let mockMppSkill: {openSession: jest.Mock; requestCloseSession: jest.Mock};
 
   beforeEach(() => {
     mockIdentitySkill = {
       getAgentPricing: jest.fn(),
+      submitFeedback: jest.fn(),
     };
     mockMppSkill = {
       openSession: jest.fn(),
