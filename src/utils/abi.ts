@@ -8,8 +8,10 @@ import {Abi} from '@multiversx/sdk-core';
  * - `NonZeroBigUint` → `BigUint`
  */
 export function createPatchedAbi(abiJson: object): Abi {
-  const raw = JSON.stringify(abiJson)
-    .replace(/"TokenId"/g, '"TokenIdentifier"')
-    .replace(/"NonZeroBigUint"/g, '"BigUint"');
-  return Abi.create(JSON.parse(raw));
+  const raw = JSON.stringify(abiJson);
+  const patched = raw
+    .replace(/\bTokenId\b/g, 'TokenIdentifier')
+    .replace(/\bNonZeroBigUint\b/g, 'BigUint')
+    .replace(/\bPayment\b/g, 'EgldOrEsdtTokenPayment');
+  return Abi.create(JSON.parse(patched));
 }
