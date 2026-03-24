@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MoltbotMppSkill = void 0;
 const sdk_core_1 = require("@multiversx/sdk-core");
 const sdk_network_providers_1 = require("@multiversx/sdk-network-providers");
+const js_sha3_1 = require("js-sha3");
 class MoltbotMppSkill {
     signer;
     policy;
@@ -68,6 +69,45 @@ class MoltbotMppSkill {
             }
         }
         return txHash;
+    }
+    /**
+     * Generates a deterministic channel ID for a session.
+     */
+    computeChannelId(receiver, token, nonce = 0n) {
+        const employer = this.signer.getAddress().bech32();
+        const employerAddr = sdk_core_1.Address.newFromBech32(employer);
+        const receiverAddr = sdk_core_1.Address.newFromBech32(receiver);
+        const hasher = js_sha3_1.keccak256.create();
+        hasher.update(employerAddr.getPublicKey());
+        hasher.update(receiverAddr.getPublicKey());
+        hasher.update(Buffer.from(token));
+        // Nonce as 8 bytes big endian
+        const nonceBuf = Buffer.alloc(8);
+        nonceBuf.writeBigUInt64BE(BigInt(nonce));
+        hasher.update(nonceBuf);
+        return hasher.hex();
+    }
+    /**
+     * Signs an off-chain voucher for a session.
+     */
+    async signVoucher(contractAddress, channelId, amount, nonce) {
+        const contract = sdk_core_1.Address.newFromBech32(contractAddress);
+        const hasher = js_sha3_1.keccak256.create();
+        hasher.update(Buffer.from('mpp-session-v1'));
+        hasher.update(contract.getPublicKey());
+        hasher.update(Buffer.from(channelId, 'hex'));
+        // Amount as 32 bytes big endian
+        const amountBuf = Buffer.alloc(32);
+        const amountHex = amount.toString(16).padStart(64, '0');
+        amountBuf.write(amountHex, 'hex');
+        hasher.update(amountBuf);
+        // Nonce as 8 bytes big endian
+        const nonceBuf = Buffer.alloc(8);
+        nonceBuf.writeBigUInt64BE(BigInt(nonce));
+        hasher.update(nonceBuf);
+        const message = Buffer.from(hasher.hex(), 'hex');
+        const signature = await this.signer.sign(message);
+        return signature.toString('hex');
     }
 }
 exports.MoltbotMppSkill = MoltbotMppSkill;

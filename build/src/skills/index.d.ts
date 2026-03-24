@@ -14,3 +14,10 @@ export { hireAgent, type HireAgentParams, type HireResult } from './hire_skills'
 export { buildManifest, buildManifestJSON, type ManifestConfig, type AgentManifest, type ManifestService, type ManifestContact, } from './manifest_skills';
 export { OASF_SCHEMA_VERSION, OASF_SKILLS, OASF_DOMAINS, getSkillCategory, getDomainCategory, getAllSkillIds, getAllDomainIds, validateOASF, type OASFDomainGroup, } from './oasf_taxonomy';
 export { MoltbotMppSkill, type AgentSpendingPolicy } from './mpp_skills';
+export * from './mpp_automation';
+export * from './x402_skills';
+export * from './acp_skills';
+export * from './a2a_skills';
+export * from './analytics_skills';
+export * from './network_skills';
+export * from './smart_contract_skills';

@@ -91,3 +91,12 @@ export {
 
 // MPP Interceptor
 export {MoltbotMppSkill, type AgentSpendingPolicy} from './mpp_skills';
+
+// Ecosystem Integrations
+export * from './mpp_automation';
+export * from './x402_skills';
+export * from './acp_skills';
+export * from './a2a_skills';
+export * from './analytics_skills';
+export * from './network_skills';
+export * from './smart_contract_skills';

@@ -5,6 +5,20 @@
  * Import everything from one place:
  *   import { registerAgent, getBalance, buildManifest } from './skills';
  */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MoltbotMppSkill = exports.validateOASF = exports.getAllDomainIds = exports.getAllSkillIds = exports.getDomainCategory = exports.getSkillCategory = exports.OASF_DOMAINS = exports.OASF_SKILLS = exports.OASF_SCHEMA_VERSION = exports.buildManifestJSON = exports.buildManifest = exports.hireAgent = exports.getBalance = exports.discoverAgents = exports.multiTransfer = exports.transfer = exports.getEscrow = exports.refund = exports.release = exports.deposit = exports.getReputation = exports.submitFeedback = exports.getJobData = exports.isJobVerified = exports.submitProof = exports.initJob = exports.setMetadata = exports.getAgent = exports.registerAgent = void 0;
 // Identity
@@ -56,4 +70,12 @@ Object.defineProperty(exports, "validateOASF", { enumerable: true, get: function
 // MPP Interceptor
 var mpp_skills_1 = require("./mpp_skills");
 Object.defineProperty(exports, "MoltbotMppSkill", { enumerable: true, get: function () { return mpp_skills_1.MoltbotMppSkill; } });
+// Ecosystem Integrations
+__exportStar(require("./mpp_automation"), exports);
+__exportStar(require("./x402_skills"), exports);
+__exportStar(require("./acp_skills"), exports);
+__exportStar(require("./a2a_skills"), exports);
+__exportStar(require("./analytics_skills"), exports);
+__exportStar(require("./network_skills"), exports);
+__exportStar(require("./smart_contract_skills"), exports);
 //# sourceMappingURL=index.js.map
