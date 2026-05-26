@@ -1,7 +1,8 @@
 import {UserSigner} from '@multiversx/sdk-wallet';
 import {Transaction, Address, TransactionComputer} from '@multiversx/sdk-core';
 import {ApiNetworkProvider} from '@multiversx/sdk-network-providers';
-import {keccak256} from 'js-sha3';
+import {keccak_256} from '@noble/hashes/sha3';
+import {bytesToHex} from '@noble/hashes/utils';
 
 export interface AgentSpendingPolicy {
   dailyLimitFiat?: number;
@@ -101,7 +102,7 @@ export class MoltbotMppSkill {
     const employerAddr = Address.newFromBech32(employer);
     const receiverAddr = Address.newFromBech32(receiver);
 
-    const hasher = keccak256.create();
+    const hasher = keccak_256.create();
     hasher.update(employerAddr.getPublicKey());
     hasher.update(receiverAddr.getPublicKey());
     hasher.update(Buffer.from(token));
@@ -111,7 +112,7 @@ export class MoltbotMppSkill {
     nonceBuf.writeBigUInt64BE(BigInt(nonce));
     hasher.update(nonceBuf);
 
-    return hasher.hex();
+    return bytesToHex(hasher.digest());
   }
 
   /**
@@ -125,7 +126,7 @@ export class MoltbotMppSkill {
   ): Promise<string> {
     const contract = Address.newFromBech32(contractAddress);
 
-    const hasher = keccak256.create();
+    const hasher = keccak_256.create();
     hasher.update(Buffer.from('mpp-session-v1'));
     hasher.update(contract.getPublicKey());
     hasher.update(Buffer.from(channelId, 'hex'));
@@ -141,7 +142,7 @@ export class MoltbotMppSkill {
     nonceBuf.writeBigUInt64BE(BigInt(nonce));
     hasher.update(nonceBuf);
 
-    const message = Buffer.from(hasher.hex(), 'hex');
+    const message = Buffer.from(hasher.digest());
     const signature = await this.signer.sign(message);
     return signature.toString('hex');
   }

@@ -9,7 +9,7 @@ A fully functional, hardened implementation of an OpenClaw Agent with a comprehe
 - ✅ **SDK v15+** — Modern `NetworkEntrypoint`, ABI factories, controllers
 - ✅ **14+ Agent Skills** — Identity, validation, reputation, escrow, transfers, discovery, hiring, manifest
 - ✅ **Production Hardened** — Central config, SSRF guards, retry logic, timeouts
-- ✅ **TDD Verified** — 47+ unit tests, mocked SDK for offline testing
+- ✅ **TDD Verified** — 86+ unit tests, mocked SDK for offline testing
 - ✅ **OASF Taxonomy** — Official 136 skill + 204 domain IDs for agent registration
 
 ## Installation
@@ -144,29 +144,28 @@ moltbot-starter-kit/
 │   │   ├── hire_skills.ts
 │   │   ├── manifest_skills.ts
 │   │   └── oasf_taxonomy.ts
-│   ├── abis/             ← Smart contract ABIs
-│   ├── utils/            ← Entrypoint, ABI patching, Logger
+│   ├── chain/            ← Signer, provider, tx, relayer, ABI (shared boilerplate)
+│   ├── abis/             ← Smart contract ABIs (single source of truth)
+│   ├── utils/            ← Logger, RelayerAddressCache, ABI patching
 │   ├── config.ts         ← Centralized configuration
-│   ├── validator.ts      ← Proof submission logic
-│   ├── hiring.ts         ← Employer hiring flow
-│   ├── facilitator.ts    ← x402 facilitator client
+│   ├── validator.ts      ← Proof submission + auto-registration
+│   ├── facilitator.ts    ← x402 facilitator client (EventEmitter + backoff)
 │   └── index.ts          ← Main agent loop
-├── scripts/              ← register.ts, update_manifest.ts, build_manifest.ts
-├── tests/                ← 68 unit tests (17 suites)
+├── scripts/              ← register.ts, update_manifest.ts, build_manifest.ts, hiring.ts
+├── tests/                ← 86 unit tests (22 suites)
+├── tsconfig.json         ← Permissive — used by ts-jest / ts-node
+├── tsconfig.build.json   ← Narrow (src/ only) — used by `npm run build`
 ├── agent.config.json     ← Agent on-chain state (nonce, services, metadata)
 └── manifest.config.json  ← Manifest blueprint (OASF skills, endpoints, contact)
 ```
 
 ## Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MULTIVERSX_CHAIN_ID` | Network chain ID | `D` (devnet) |
-| `MULTIVERSX_API_URL` | API endpoint | devnet API |
-| `IDENTITY_REGISTRY_ADDRESS` | Identity Registry contract | — |
-| `VALIDATION_REGISTRY_ADDRESS` | Validation Registry contract | — |
-| `REPUTATION_REGISTRY_ADDRESS` | Reputation Registry contract | — |
-| `ESCROW_CONTRACT_ADDRESS` | Escrow contract | — |
+The full list of supported variables — wallet, network, contract addresses,
+external services, gas/relayer settings, timeouts/retries, employer role,
+validation flow, and IPFS pinning — lives in [`.env.example`](./.env.example).
+Copy it (`cp .env.example .env`) and edit only what your deployment needs;
+every value has a sensible devnet default in `src/config.ts`.
 
 ## Testing
 

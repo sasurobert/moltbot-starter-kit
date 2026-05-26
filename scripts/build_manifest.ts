@@ -84,7 +84,6 @@ interface ManifestConfig {
 async function main(): Promise<void> {
   console.log('📋 Building Agent Registration Manifest...\n');
 
-  // 1. Load config
   const configPath = path.resolve('manifest.config.json');
   let config: ManifestConfig;
 
@@ -106,7 +105,6 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // 2. Build the manifest
   const manifest: AgentManifest = {
     type: 'https://multiversx.com/standards/mx-8004#registration-v1',
     name: config.agentName,
@@ -124,7 +122,6 @@ async function main(): Promise<void> {
     x402Support: config.x402Support ?? true,
   };
 
-  // 3. Validate
   const warnings: string[] = [];
 
   if (manifest.services.length === 0) {
@@ -171,7 +168,6 @@ async function main(): Promise<void> {
     }
   }
 
-  // Check for offerings without on-chain service config match
   const hasOfferings = manifest.services.some(
     svc => svc.offerings && svc.offerings.length > 0,
   );
@@ -181,7 +177,6 @@ async function main(): Promise<void> {
     );
   }
 
-  // 4. Write manifest.json
   const outputPath = path.resolve('manifest.json');
   const json = JSON.stringify(manifest, null, 2);
   await fs.writeFile(outputPath, json, 'utf8');

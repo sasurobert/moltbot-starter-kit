@@ -108,7 +108,7 @@ The kit supports a **Full Cycle** interaction where one Moltbot hires another.
 
 ### 6.1. Employer Role (Hiring Script)
 
-You can act as an Employer (Client) to hire another agent using `src/hiring.ts`.
+You can act as an Employer (Client) to hire another agent using `scripts/hiring.ts`.
 
 **Prerequisites**:
 
@@ -116,10 +116,16 @@ You can act as an Employer (Client) to hire another agent using `src/hiring.ts`.
 - Ensure the employer wallet is funded.
 - Ensure the separate "Worker" bot is running (`npm start`) with `AGENT_NONCE=1`.
 
+**Optional tuning** (env vars, all read by `scripts/hiring.ts`):
+
+- `AGENT_NONCE` — which on-chain agent to hire (default: `1`).
+- `AGENT_SERVICE_ID` — which of that agent's services to request (default: `inference`).
+- `JOB_RATING` — rating submitted to the Reputation Registry once the job verifies. Integer **1–5**, default `5`. Out-of-range values abort the run.
+
 **Run the Hiring Flow**:
 
 ```bash
-npx ts-node src/hiring.ts
+npm run hire   # or: npx ts-node scripts/hiring.ts
 ```
 
 **What happens?**
@@ -127,7 +133,7 @@ npx ts-node src/hiring.ts
 1.  **Preparation**: Queries the Facilitator to architect the job.
 2.  **Settlement**: Broadcasts `init_job_with_payment` (Pay-at-Init).
 3.  **Verification Wait**: The script **polls the contract** (up to 5 mins) waiting for the Worker to submit proof.
-4.  **Feedback**: Once verified, the script automatically submits a **5-star rating** to the Reputation Registry.
+4.  **Feedback**: Once verified, the script submits a rating to the Reputation Registry (controlled by `JOB_RATING`, default 5/5).
 
 ### 6.2. Resilience Configuration
 

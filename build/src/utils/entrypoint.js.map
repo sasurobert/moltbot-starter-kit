@@ -1,1 +1,0 @@
-{"version":3,"file":"entrypoint.js","sourceRoot":"","sources":["../../../src/utils/entrypoint.ts"],"names":[],"mappings":";;AAOA,4CAMC;AAbD,mDAAuD;AACvD,sCAAiC;AAEjC;;;GAGG;AACH,SAAgB,gBAAgB;IAC9B,OAAO,IAAI,4BAAiB,CAAC;QAC3B,kBAAkB,EAAE,eAAM,CAAC,OAAO;QAClC,mBAAmB,EAAE,KAAK;QAC1B,OAAO,EAAE,eAAM,CAAC,QAAQ;KACzB,CAAC,CAAC;AACL,CAAC"}

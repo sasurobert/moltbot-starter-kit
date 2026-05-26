@@ -17,12 +17,10 @@ async function main() {
   const [pemPath, receiver, value, nonceStr, chainID, relayerAddress, dataStr] =
     args;
 
-  // 1. Load Signer
   const pemContent = await fs.readFile(pemPath, 'utf8');
   const signer = UserSigner.fromPem(pemContent);
   const sender = signer.getAddress();
 
-  // 2. Construct Transaction with relayer field (Relayed V3)
   const RELAYED_V3_EXTRA_GAS = 50000n;
   const BASE_GAS_LIMIT = 500000n;
 
@@ -31,21 +29,21 @@ async function main() {
     value: BigInt(value),
     receiver: new Address(receiver),
     sender: new Address(sender.bech32()),
-    relayer: new Address(relayerAddress), // Must set BEFORE signing
+    // Relayer field + version 2 are part of the signed payload; both must be
+    // set before computeBytesForSigning, or the relayer will reject the tx.
+    relayer: new Address(relayerAddress),
     gasPrice: 1000000000n,
     gasLimit: BASE_GAS_LIMIT + RELAYED_V3_EXTRA_GAS,
     data: dataStr ? Buffer.from(dataStr) : undefined,
     chainID: chainID,
-    version: 2, // Must be >= 2 for Relayed V3
+    version: 2,
   });
 
-  // 3. Sign (relayer field is part of signed bytes)
   const computer = new TransactionComputer();
   const serialized = computer.computeBytesForSigning(tx);
   const signature = await signer.sign(serialized);
   tx.signature = signature;
 
-  // 4. Output Payload (compatible with x402 settle and /relay)
   const payload = {
     sender: sender.bech32(),
     receiver: receiver,
@@ -59,7 +57,7 @@ async function main() {
     gasPrice: 1000000000,
     gasLimit: Number(BASE_GAS_LIMIT + RELAYED_V3_EXTRA_GAS),
     relayer: relayerAddress,
-    validBefore: Math.floor(Date.now() / 1000) + 3600, // 1 hour
+    validBefore: Math.floor(Date.now() / 1000) + 3600,
   };
 
   console.log(JSON.stringify(payload));

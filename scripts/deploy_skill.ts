@@ -4,7 +4,6 @@ import * as path from 'path';
 async function main() {
   console.log('📦 preparing Skill Deployment...');
 
-  // 1. Read Config
   const configPath = path.resolve('agent.config.json');
   let config;
   try {
@@ -16,7 +15,6 @@ async function main() {
     process.exit(1);
   }
 
-  // 2. Validate Metadata
   console.log(`Agent: ${config.agentName}`);
   if (!config.capabilities || config.capabilities.length === 0) {
     console.warn('⚠️  No capabilities listed in agent.config.json!');
@@ -24,14 +22,12 @@ async function main() {
     console.log(`Capabilities: ${config.capabilities.join(', ')}`);
   }
 
-  // 3. Simulate Packaging
   console.log('Running static analysis on skills... (Simulated)');
-  await new Promise(r => setTimeout(r, 800)); // Fake work
+  await new Promise(r => setTimeout(r, 800));
   console.log('✅ Skills Verified.');
 
-  // 4. Simulate Upload
   console.log('Uploading to ClawHub Registry... (Simulated)');
-  await new Promise(r => setTimeout(r, 1000)); // Fake network
+  await new Promise(r => setTimeout(r, 1000));
 
   const mockHash =
     'Qm' +

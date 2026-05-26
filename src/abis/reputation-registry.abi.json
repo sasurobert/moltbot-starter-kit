@@ -1,13 +1,13 @@
 {
     "buildInfo": {
         "rustc": {
-            "version": "1.91.1",
-            "commitHash": "ed61e7d7e242494fb7057f2657300d9e77bb4fcb",
-            "commitDate": "2025-11-07",
+            "version": "1.86.0",
+            "commitHash": "05f9846f893b09a1be1fc8560e33fc3c815cfecb",
+            "commitDate": "2025-03-31",
             "channel": "Stable",
-            "host": "aarch64-apple-darwin",
-            "short": "rustc 1.91.1 (ed61e7d7e 2025-11-07)",
-            "llvmVersion": "21.1"
+            "host": "x86_64-unknown-linux-gnu",
+            "short": "rustc 1.86.0 (05f9846f8 2025-03-31)",
+            "llvmVersion": "19.1"
         },
         "contractCrate": {
             "name": "reputation-registry",
@@ -15,7 +15,7 @@
         },
         "framework": {
             "name": "multiversx-sc",
-            "version": "0.64.1"
+            "version": "0.64.2"
         }
     },
     "name": "ReputationRegistry",
@@ -275,6 +275,32 @@
                 {
                     "type": "variadic<Address>",
                     "multi_result": true
+                }
+            ]
+        },
+        {
+            "docs": [
+                "Paginated list of client addresses who gave feedback to an agent. `from` = start index, `size` = max items (capped at 100)."
+            ],
+            "name": "getFeedbackClientsPage",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "agent_nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "from",
+                    "type": "u64"
+                },
+                {
+                    "name": "size",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<Address>"
                 }
             ]
         },

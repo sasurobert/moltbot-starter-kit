@@ -1,18 +1,19 @@
 /**
  * Escrow Skills — deposit, release, refund, query escrow state
  *
- * Uses SDK v15 patterns with the Escrow ABI.
+ * Uses the centralized chain/ layer.
  */
-import {Address, TransactionComputer} from '@multiversx/sdk-core';
-import {ApiNetworkProvider} from '@multiversx/sdk-network-providers';
-import {UserSigner} from '@multiversx/sdk-wallet';
-import {promises as fs} from 'fs';
-import * as path from 'path';
+import {Address} from '@multiversx/sdk-core';
 
 import {CONFIG} from '../config';
 import {Logger} from '../utils/logger';
-import {createEntrypoint} from '../utils/entrypoint';
-import {createPatchedAbi} from '../utils/abi';
+import {
+  loadSignerWithAddress,
+  createProvider,
+  createEntrypoint,
+  createPatchedAbi,
+  signAndSend,
+} from '../chain';
 import * as escrowAbiJson from '../abis/escrow.abi.json';
 
 const logger = new Logger('EscrowSkills');
@@ -36,22 +37,7 @@ export interface EscrowData {
   amount: bigint;
   poa_hash: Uint8Array;
   deadline: bigint;
-  status: string; // 'Active' | 'Released' | 'Refunded'
-}
-
-// ─── Helpers ───────────────────────────────────────────────────────────────────
-
-async function loadSignerAndProvider() {
-  const pemPath =
-    process.env.MULTIVERSX_PRIVATE_KEY || path.resolve('wallet.pem');
-  const pemContent = await fs.readFile(pemPath, 'utf8');
-  const signer = UserSigner.fromPem(pemContent);
-  const senderAddress = new Address(signer.getAddress().bech32());
-  const provider = new ApiNetworkProvider(CONFIG.API_URL, {
-    clientName: 'moltbot-skills',
-    timeout: CONFIG.REQUEST_TIMEOUT,
-  });
-  return {signer, senderAddress, provider};
+  status: string;
 }
 
 // ─── deposit ───────────────────────────────────────────────────────────────────
@@ -59,7 +45,8 @@ async function loadSignerAndProvider() {
 export async function deposit(params: DepositParams): Promise<string> {
   logger.info(`Depositing ${params.amount} for job ${params.jobId}`);
 
-  const {signer, senderAddress, provider} = await loadSignerAndProvider();
+  const {signer, senderAddress} = await loadSignerWithAddress();
+  const provider = createProvider('moltbot-skills');
 
   const entrypoint = createEntrypoint();
   const abi = createPatchedAbi(escrowAbiJson);
@@ -83,15 +70,7 @@ export async function deposit(params: DepositParams): Promise<string> {
     nativeTransferAmount: params.token ? 0n : params.amount,
   });
 
-  const account = await provider.getAccount({
-    bech32: () => senderAddress.toBech32(),
-  });
-  tx.nonce = BigInt(account.nonce);
-
-  const computer = new TransactionComputer();
-  tx.signature = await signer.sign(computer.computeBytesForSigning(tx));
-
-  const txHash = await provider.sendTransaction(tx);
+  const txHash = await signAndSend(tx, signer, senderAddress, provider);
   logger.info(`Deposit tx: ${txHash}`);
   return txHash;
 }
@@ -101,7 +80,8 @@ export async function deposit(params: DepositParams): Promise<string> {
 export async function release(jobId: string): Promise<string> {
   logger.info(`Releasing escrow for job ${jobId}`);
 
-  const {signer, senderAddress, provider} = await loadSignerAndProvider();
+  const {signer, senderAddress} = await loadSignerWithAddress();
+  const provider = createProvider('moltbot-skills');
 
   const entrypoint = createEntrypoint();
   const abi = createPatchedAbi(escrowAbiJson);
@@ -117,15 +97,7 @@ export async function release(jobId: string): Promise<string> {
     arguments: [Buffer.from(jobId)],
   });
 
-  const account = await provider.getAccount({
-    bech32: () => senderAddress.toBech32(),
-  });
-  tx.nonce = BigInt(account.nonce);
-
-  const computer = new TransactionComputer();
-  tx.signature = await signer.sign(computer.computeBytesForSigning(tx));
-
-  const txHash = await provider.sendTransaction(tx);
+  const txHash = await signAndSend(tx, signer, senderAddress, provider);
   logger.info(`Release tx: ${txHash}`);
   return txHash;
 }
@@ -135,7 +107,8 @@ export async function release(jobId: string): Promise<string> {
 export async function refund(jobId: string): Promise<string> {
   logger.info(`Refunding escrow for job ${jobId}`);
 
-  const {signer, senderAddress, provider} = await loadSignerAndProvider();
+  const {signer, senderAddress} = await loadSignerWithAddress();
+  const provider = createProvider('moltbot-skills');
 
   const entrypoint = createEntrypoint();
   const abi = createPatchedAbi(escrowAbiJson);
@@ -151,15 +124,7 @@ export async function refund(jobId: string): Promise<string> {
     arguments: [Buffer.from(jobId)],
   });
 
-  const account = await provider.getAccount({
-    bech32: () => senderAddress.toBech32(),
-  });
-  tx.nonce = BigInt(account.nonce);
-
-  const computer = new TransactionComputer();
-  tx.signature = await signer.sign(computer.computeBytesForSigning(tx));
-
-  const txHash = await provider.sendTransaction(tx);
+  const txHash = await signAndSend(tx, signer, senderAddress, provider);
   logger.info(`Refund tx: ${txHash}`);
   return txHash;
 }

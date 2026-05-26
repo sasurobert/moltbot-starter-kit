@@ -11,7 +11,6 @@ describe('Moltbot Starter Job Flow', () => {
   });
 
   it('should process a payment event and submit proof', async () => {
-    // Mock functionality
     const payment = {
       amount: '100',
       token: 'EGLD',

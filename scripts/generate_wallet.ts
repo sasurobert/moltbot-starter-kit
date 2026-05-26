@@ -5,25 +5,22 @@ import * as path from 'path';
 async function main() {
   const walletPath = path.resolve(__dirname, '../wallet.pem');
 
-  // Check if wallet already exists
   try {
     await fs.access(walletPath);
     console.log('Wallet already exists at wallet.pem. Skipping generation.');
     return;
   } catch {
-    // File doesn't exist, proceed
+    // wallet doesn't exist — proceed with generation
   }
 
   console.log('Generating new MultiversX wallet...');
 
-  // Generate Mnemonic
   const mnemonic = Mnemonic.generate();
   const secretKey = mnemonic.deriveKey(0);
   const signer = new UserSigner(secretKey);
   const address = signer.getAddress().bech32();
 
-  // Create PEM content
-  // SDK expects Base64 encoding of the HEX STRING of the seed + pubkey
+  // SDK PEM format: base64 of the hex-encoded (seed || pubkey) string.
   const secretKeyHex = secretKey.hex();
   const pubKeyHex = signer.getAddress().hex();
   const combinedHex = secretKeyHex + pubKeyHex;
@@ -33,7 +30,6 @@ async function main() {
 ${base64Content.match(/.{1,64}/g)?.join('\n')}
 -----END PRIVATE KEY for ${address}-----`;
 
-  // Save to file
   await fs.writeFile(walletPath, pemContent, 'utf8');
 
   console.log('\n✅ Wallet generated successfully!');

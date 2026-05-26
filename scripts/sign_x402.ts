@@ -15,33 +15,31 @@ async function main() {
 
   const [pemPath, receiver, value, nonceStr, chainID, dataStr] = args;
 
-  // 1. Load Signer
   const pemContent = await fs.readFile(pemPath, 'utf8');
   const signer = UserSigner.fromPem(pemContent);
   const sender = signer.getAddress();
 
-  // 2. Construct Transaction
-  // NOTE: Must match Settler.ts construction EXACTLY
+  // These constants must match the construction in the facilitator's
+  // Settler.ts byte-for-byte; mismatches invalidate the signature.
   const tx = new Transaction({
     nonce: BigInt(nonceStr),
     value: BigInt(value),
     receiver: new Address(receiver),
     sender: new Address(sender.bech32()),
-    gasPrice: 1000000000n, // Facilitator uses default/inherited? Settler says: BigInt(payload.gasPrice)
-    gasLimit: 500000n, // Standard transfer
+    gasPrice: 1000000000n,
+    gasLimit: 500000n,
     data: dataStr ? Buffer.from(dataStr) : undefined,
     chainID: chainID,
-    version: 2, // Must be >= 2 for Relayed V3 compatibility
+    // version 2 keeps the payload compatible with Relayed V3 if a relayer
+    // later wraps it.
+    version: 2,
   });
 
-  // 3. Sign
   const computer = new TransactionComputer();
   const serialized = computer.computeBytesForSigning(tx);
   const signature = await signer.sign(serialized);
   tx.signature = signature;
 
-  // 4. Output Payload
-  // X402Payload interface
   const payload = {
     sender: sender.bech32(),
     receiver: receiver,
@@ -54,7 +52,7 @@ async function main() {
     options: 0,
     gasPrice: 1000000000,
     gasLimit: 500000,
-    validBefore: Math.floor(Date.now() / 1000) + 3600, // 1 hour
+    validBefore: Math.floor(Date.now() / 1000) + 3600,
   };
 
   console.log(JSON.stringify(payload));

@@ -1,24 +1,24 @@
 /**
  * Identity Skills — register, update, query agent identity on the Identity Registry
  *
- * Uses SDK v15 patterns: createEntrypoint() → factory/controller → ABI-typed arguments.
- * Follows validators.ts and hiring.ts established patterns.
+ * Uses SDK v15 patterns via the centralized `chain/` layer:
+ *   - signer & provider come from chain/* helpers
+ *   - "fetch nonce → sign → send/relay" is chain.signAndSend / signAndRelay
+ *   - ABI patching is chain.createPatchedAbi
  */
-import {
-  Address,
-  TransactionComputer,
-  VariadicValue,
-} from '@multiversx/sdk-core';
-import {ApiNetworkProvider} from '@multiversx/sdk-network-providers';
-import {UserSigner} from '@multiversx/sdk-wallet';
-import {promises as fs} from 'fs';
-import * as path from 'path';
-import axios from 'axios';
+import {Address, VariadicValue} from '@multiversx/sdk-core';
 
 import {CONFIG} from '../config';
 import {Logger} from '../utils/logger';
-import {createEntrypoint} from '../utils/entrypoint';
-import {createPatchedAbi} from '../utils/abi';
+import {
+  loadSignerWithAddress,
+  createProvider,
+  createEntrypoint,
+  createPatchedAbi,
+  discoverRelayerAddress,
+  signAndSend,
+  withRelayer,
+} from '../chain';
 import * as identityAbiJson from '../abis/identity-registry.abi.json';
 
 const logger = new Logger('IdentitySkills');
@@ -45,21 +45,6 @@ export interface SetMetadataParams {
   entries: Array<{key: string; value: string}>;
 }
 
-// ─── Internals ─────────────────────────────────────────────────────────────────
-
-async function loadSignerAndProvider() {
-  const pemPath =
-    process.env.MULTIVERSX_PRIVATE_KEY || path.resolve('wallet.pem');
-  const pemContent = await fs.readFile(pemPath, 'utf8');
-  const signer = UserSigner.fromPem(pemContent);
-  const senderAddress = new Address(signer.getAddress().bech32());
-  const provider = new ApiNetworkProvider(CONFIG.API_URL, {
-    clientName: 'moltbot-skills',
-    timeout: CONFIG.REQUEST_TIMEOUT,
-  });
-  return {signer, senderAddress, provider};
-}
-
 // ─── register_agent ────────────────────────────────────────────────────────────
 
 export async function registerAgent(
@@ -67,7 +52,8 @@ export async function registerAgent(
 ): Promise<string> {
   logger.info(`Registering agent: ${params.name}`);
 
-  const {signer, senderAddress, provider} = await loadSignerAndProvider();
+  const {signer, senderAddress} = await loadSignerWithAddress();
+  const provider = createProvider('moltbot-skills');
 
   const entrypoint = createEntrypoint();
   const abi = createPatchedAbi(identityAbiJson);
@@ -88,28 +74,14 @@ export async function registerAgent(
     ],
   });
 
-  // Nonce
-  const account = await provider.getAccount({
-    bech32: () => senderAddress.toBech32(),
-  });
-  tx.nonce = BigInt(account.nonce);
-
-  // Relayer V3
   if (params.useRelayer) {
-    const relayerAddr = await discoverRelayerAddress(senderAddress);
-    if (relayerAddr) {
-      tx.relayer = relayerAddr;
-      tx.version = 2;
-      tx.gasLimit =
-        BigInt(tx.gasLimit.toString()) + CONFIG.RELAYER_GAS_OVERHEAD;
+    const relayerBech = await discoverRelayerAddress(senderAddress);
+    if (relayerBech) {
+      withRelayer(tx, Address.newFromBech32(relayerBech));
     }
   }
 
-  // Sign & Send
-  const computer = new TransactionComputer();
-  tx.signature = await signer.sign(computer.computeBytesForSigning(tx));
-
-  const txHash = await provider.sendTransaction(tx);
+  const txHash = await signAndSend(tx, signer, senderAddress, provider);
   logger.info(`Registration tx: ${txHash}`);
   return txHash;
 }
@@ -148,7 +120,8 @@ export async function setMetadata(params: SetMetadataParams): Promise<string> {
     `Setting ${params.entries.length} metadata entries for agent #${params.agentNonce}`,
   );
 
-  const {signer, senderAddress, provider} = await loadSignerAndProvider();
+  const {signer, senderAddress} = await loadSignerWithAddress();
+  const provider = createProvider('moltbot-skills');
 
   const entrypoint = createEntrypoint();
   const abi = createPatchedAbi(identityAbiJson);
@@ -166,37 +139,7 @@ export async function setMetadata(params: SetMetadataParams): Promise<string> {
     ],
   });
 
-  const account = await provider.getAccount({
-    bech32: () => senderAddress.toBech32(),
-  });
-  tx.nonce = BigInt(account.nonce);
-
-  const computer = new TransactionComputer();
-  tx.signature = await signer.sign(computer.computeBytesForSigning(tx));
-
-  const txHash = await provider.sendTransaction(tx);
+  const txHash = await signAndSend(tx, signer, senderAddress, provider);
   logger.info(`Metadata tx: ${txHash}`);
   return txHash;
-}
-
-// ─── Relayer Discovery ─────────────────────────────────────────────────────────
-
-async function discoverRelayerAddress(
-  senderAddress: Address,
-): Promise<Address | null> {
-  const relayerUrl = CONFIG.PROVIDERS.RELAYER_URL;
-  if (!relayerUrl) return null;
-
-  try {
-    const resp = await axios.get(
-      `${relayerUrl}/relayer/address/${senderAddress.toBech32()}`,
-    );
-    if (resp.data?.relayerAddress) {
-      return Address.newFromBech32(resp.data.relayerAddress);
-    }
-    return null;
-  } catch {
-    logger.warn('Could not discover relayer address');
-    return null;
-  }
 }

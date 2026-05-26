@@ -1,4 +1,5 @@
 node_modules/
+build/
 dist/
 coverage/
 .env
@@ -6,4 +7,5 @@ coverage/
 wallet.pem
 agent.config.json
 manifest.config.json
+.relayer_cache.json
 .DS_Store

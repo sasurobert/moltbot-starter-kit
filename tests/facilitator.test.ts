@@ -38,9 +38,10 @@ describe('Facilitator', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    // Expect axios to have been called with unread=true
+    // Expect axios to have been called with unread=true (with or without options)
     expect(axios.get).toHaveBeenCalledWith(
       'http://mock-facilitator.com/events?unread=true',
+      expect.anything(),
     );
 
     // Expect callback to be called with parsed event

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {EventEmitter} from 'events';
 import {CONFIG} from './config';
 import {Logger} from './utils/logger';
 
@@ -16,42 +17,90 @@ type PaymentCallback = (payment: PaymentEvent) => Promise<void>;
 
 export class Facilitator {
   private listener: PaymentCallback | null = null;
-  private pollingInterval: NodeJS.Timeout | null = null;
+  private emitter = new EventEmitter();
+  private pollingTimer: NodeJS.Timeout | null = null;
   private facilitatorUrl: string;
   private logger = new Logger('Facilitator');
+  private consecutiveFailures = 0;
+  private readonly basePollMs = 5000;
+  private readonly maxPollMs = 60000;
 
   constructor(url?: string) {
     this.facilitatorUrl = url || CONFIG.PROVIDERS.FACILITATOR_URL;
   }
 
+  /**
+   * Subscribe to payment events. Multiple subscribers are supported.
+   */
   onPayment(callback: PaymentCallback) {
     this.listener = callback;
+    this.emitter.on('payment', callback);
+  }
+
+  /**
+   * Synchronously emit a payment event to subscribers — used by tests and
+   * by alternative event sources (e.g., webhooks).
+   */
+  emit(payment: PaymentEvent): void {
+    this.emitter.emit('payment', payment);
   }
 
   async start() {
     this.logger.info(`Listener attached to ${this.facilitatorUrl}`);
-
-    this.pollingInterval = setInterval(async () => {
-      if (!this.listener) return;
-      try {
-        const res = await axios.get(
-          `${this.facilitatorUrl}/events?unread=true`,
-        );
-        const events = res.data;
-        if (Array.isArray(events)) {
-          for (const payment of events) {
-            // Validate structure if needed, or assume trusted source
-            await this.listener(payment);
-          }
-        }
-      } catch (e) {
-        this.logger.warn(`Facilitator poll failed: ${(e as Error).message}`);
-      }
-    }, 5000);
+    this.scheduleNextPoll(this.basePollMs);
   }
 
   async stop() {
-    if (this.pollingInterval) clearInterval(this.pollingInterval);
+    if (this.pollingTimer) {
+      clearTimeout(this.pollingTimer);
+      this.pollingTimer = null;
+    }
+    this.emitter.removeAllListeners('payment');
+  }
+
+  /**
+   * Computes next poll delay with exponential backoff & jitter on failure.
+   */
+  private nextDelayMs(): number {
+    if (this.consecutiveFailures === 0) return this.basePollMs;
+    const backoff = Math.min(
+      this.basePollMs * 2 ** this.consecutiveFailures,
+      this.maxPollMs,
+    );
+    const jitter = Math.floor(Math.random() * 1000);
+    return backoff + jitter;
+  }
+
+  private scheduleNextPoll(delayMs: number): void {
+    this.pollingTimer = setTimeout(() => this.poll(), delayMs);
+  }
+
+  private async poll(): Promise<void> {
+    try {
+      const res = await axios.get(`${this.facilitatorUrl}/events?unread=true`, {
+        timeout: CONFIG.REQUEST_TIMEOUT,
+      });
+      const events = res.data;
+      if (Array.isArray(events)) {
+        for (const payment of events) {
+          this.emitter.emit('payment', payment);
+          if (this.listener) {
+            await this.listener(payment);
+          }
+        }
+      }
+      this.consecutiveFailures = 0;
+    } catch (e) {
+      this.consecutiveFailures++;
+      const next = this.nextDelayMs();
+      this.logger.warn(
+        `Facilitator poll failed (${this.consecutiveFailures}): ${
+          (e as Error).message
+        }. Next attempt in ${next}ms.`,
+      );
+    } finally {
+      this.scheduleNextPoll(this.nextDelayMs());
+    }
   }
 
   async prepare(request: {

@@ -9,7 +9,6 @@ import {
 } from '@multiversx/sdk-core';
 import {UserSigner, UserSecretKey} from '@multiversx/sdk-wallet';
 
-// Parse args
 const args = process.argv.slice(2);
 const getArg = (key: string) => {
   const idx = args.indexOf(key);
@@ -58,7 +57,6 @@ async function main() {
     let tx: Transaction;
 
     if (token && amount) {
-      // ESDT Transfer
       const factory = new TransferTransactionsFactory({
         config: new TransactionsFactoryConfig({chainID: chainId}),
       });
@@ -73,7 +71,7 @@ async function main() {
         tokenTransfers: [tokenTransfer],
       });
 
-      // Manual overrides
+      // Override factory defaults with caller-supplied values.
       tx.nonce = BigInt(nonce);
       tx.gasLimit = BigInt(gasLimit);
       tx.gasPrice = BigInt(gasPrice);
@@ -82,7 +80,6 @@ async function main() {
         tx.version = 2;
       }
     } else {
-      // EGLD Transfer
       tx = new Transaction({
         nonce: BigInt(nonce),
         value: BigInt(value),
@@ -102,22 +99,17 @@ async function main() {
     const signature = await signer.sign(serialized);
     tx.signature = signature;
 
-    // Convert BigInts to strings/numbers for JSON output
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const plain: Record<string, any> = {...tx.toPlainObject()};
 
-    // Ensure data is string (empty string if null/undefined) to satisfy Zod schema
+    // Empty string satisfies the Facilitator's Zod `data: z.string()`.
     if (plain.data === null || plain.data === undefined) {
       plain.data = '';
     }
 
-    // Fix types for Zod schema
-    // The SDK might return plain objects with BigInts, but JSON.stringify can handle them with the replacer below.
-    // HOWEVER, the Facilitator (Zod) expects 'number' for some fields (nonce, version, options, gasLimit, gasPrice).
-    // Since JSON.stringify + replacer turns BigInt -> String, we might have type mismatch if Zod expects Number.
-    // The Zod schema says: nonce: z.number(), gasLimit: z.number(), etc.
-    // So we MUST convert to Number.
-
+    // The Facilitator's Zod schema declares nonce/gasLimit/gasPrice/version/options
+    // as `z.number()`, but sdk-core leaves them as BigInts. Coerce here so the
+    // POST body validates on the facilitator side.
     if (typeof plain.nonce === 'bigint') plain.nonce = Number(plain.nonce);
     if (typeof plain.gasLimit === 'bigint')
       plain.gasLimit = Number(plain.gasLimit);
@@ -131,7 +123,8 @@ async function main() {
       plain.options = 0;
     }
 
-    // Add time-window fields if provided (application-level, not part of SDK Transaction)
+    // validAfter / validBefore are application-level (facilitator-specific),
+    // not part of the SDK Transaction model, so they're attached here.
     if (validAfter !== undefined) plain.validAfter = validAfter;
     if (validBefore !== undefined) plain.validBefore = validBefore;
 

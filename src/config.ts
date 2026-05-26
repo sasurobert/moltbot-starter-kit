@@ -54,9 +54,8 @@ export const CONFIG = {
     URI: process.env.AGENT_URI || 'https://moltbot.io',
   },
 
-  // Security Logic
+  // Security
   SECURITY: {
-    // Default allowed domains for fetching job payloads
     ALLOWED_DOMAINS: (
       process.env.ALLOWED_DOMAINS || 'example.com,jsonplaceholder.typicode.com'
     )
@@ -73,7 +72,7 @@ export const CONFIG = {
     SUBMISSION_DELAY: parseInt(
       process.env.RETRY_SUBMISSION_DELAY || '10000',
       10,
-    ), // Wait 10s before retrying check
+    ),
     CHECK_INTERVAL: parseInt(process.env.RETRY_CHECK_INTERVAL || '2000', 10),
   },
 

@@ -1,6 +1,4 @@
 import * as dotenv from 'dotenv';
-import axios from 'axios';
-import {UserSigner} from '@multiversx/sdk-wallet';
 import {promises as fs} from 'fs';
 import * as path from 'path';
 import {Facilitator} from './facilitator';
@@ -11,6 +9,7 @@ import {JobHandler} from './job_handler';
 import {CONFIG} from './config';
 import {Logger} from './utils/logger';
 import {AgentDiscovery} from './discovery';
+import {loadSignerWithAddress, discoverRelayerAddress} from './chain';
 
 export {
   Facilitator,
@@ -30,7 +29,6 @@ dotenv.config();
 async function main() {
   logger.info('Starting Moltbot...');
 
-  // Load Config
   try {
     const configPath = path.resolve('agent.config.json');
     const config = JSON.parse(await fs.readFile(configPath, 'utf8'));
@@ -39,29 +37,20 @@ async function main() {
     logger.warn('agent.config.json not found. See agent.config.example.json.');
   }
 
-  // Initialize Bridges
   new McpBridge(CONFIG.PROVIDERS.MCP_URL);
   const validator = new Validator();
   const facilitator = new Facilitator();
   const processor = new JobProcessor();
   const handler = new JobHandler(validator, processor);
 
-  // 0. Fetch Relayer Address (Dynamic Shard Awareness)
+  // Discover the relayer for the wallet's shard before serving any jobs;
+  // proof submissions need it set, but absence is non-fatal (direct fallback).
   try {
-    const walletPath =
-      process.env.MULTIVERSX_PRIVATE_KEY || path.resolve('wallet.pem');
-    const walletContent = await fs.readFile(walletPath, 'utf8');
-    const signer = UserSigner.fromPem(walletContent);
-    const myAddress = signer.getAddress().bech32();
-
+    const {senderAddress} = await loadSignerWithAddress();
     logger.info(
-      `Fetching Relayer Address for ${myAddress} from ${CONFIG.PROVIDERS.RELAYER_URL}...`,
+      `Discovering relayer for ${senderAddress.toBech32()} from ${CONFIG.PROVIDERS.RELAYER_URL}...`,
     );
-    const relayerResp = await axios.get(
-      `${CONFIG.PROVIDERS.RELAYER_URL}/relayer/address/${myAddress}`,
-      {timeout: CONFIG.REQUEST_TIMEOUT},
-    );
-    const relayerAddress = relayerResp.data?.relayerAddress;
+    const relayerAddress = await discoverRelayerAddress(senderAddress);
 
     if (relayerAddress) {
       logger.info(`Using Relayer: ${relayerAddress}`);
@@ -77,15 +66,12 @@ async function main() {
     );
   }
 
-  // Start Listener
   facilitator.onPayment(async payment => {
     logger.info(
       `[Job] Payment Received! Amount: ${payment.amount} ${payment.token}`,
     );
 
     const jobId = payment.meta?.jobId || `job-${Date.now()}`;
-
-    // Fire-and-Forget Handler
     void handler.handle(jobId, payment);
   });
 

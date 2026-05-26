@@ -1,12 +1,12 @@
-import {Address, TransactionComputer} from '@multiversx/sdk-core';
-import {ApiNetworkProvider} from '@multiversx/sdk-network-providers';
-import {UserSigner} from '@multiversx/sdk-wallet';
-import {promises as fs} from 'fs';
-import * as path from 'path';
+import {Address} from '@multiversx/sdk-core';
 
-import {CONFIG} from '../config';
 import {Logger} from '../utils/logger';
-import {createEntrypoint} from '../utils/entrypoint';
+import {
+  loadSignerWithAddress,
+  createProvider,
+  createEntrypoint,
+  signAndSend,
+} from '../chain';
 
 const logger = new Logger('SmartContractSkills');
 
@@ -22,19 +22,6 @@ export interface ContractExecuteParams {
   args?: string[];
   value?: bigint;
   gasLimit?: bigint;
-}
-
-async function loadSignerAndProvider() {
-  const pemPath =
-    process.env.MULTIVERSX_PRIVATE_KEY || path.resolve('wallet.pem');
-  const pemContent = await fs.readFile(pemPath, 'utf8');
-  const signer = UserSigner.fromPem(pemContent);
-  const senderAddress = new Address(signer.getAddress().bech32());
-  const provider = new ApiNetworkProvider(CONFIG.API_URL, {
-    clientName: 'moltbot-skills',
-    timeout: CONFIG.REQUEST_TIMEOUT,
-  });
-  return {signer, senderAddress, provider};
 }
 
 export async function queryContract(
@@ -61,7 +48,8 @@ export async function executeContract(
   params: ContractExecuteParams,
 ): Promise<string> {
   logger.info(`Executing contract ${params.address} func: ${params.funcName}`);
-  const {signer, senderAddress, provider} = await loadSignerAndProvider();
+  const {signer, senderAddress} = await loadSignerWithAddress();
+  const provider = createProvider('moltbot-skills');
   const entrypoint = createEntrypoint();
   const factory = entrypoint.createSmartContractTransactionsFactory();
 
@@ -70,18 +58,10 @@ export async function executeContract(
     function: params.funcName,
     arguments: params.args || [],
     nativeTransferAmount: params.value || 0n,
-    gasLimit: params.gasLimit || 10000000n,
+    gasLimit: params.gasLimit || 10_000_000n,
   });
 
-  const account = await provider.getAccount({
-    bech32: () => senderAddress.toBech32(),
-  });
-  tx.nonce = BigInt(account.nonce);
-
-  const computer = new TransactionComputer();
-  tx.signature = await signer.sign(computer.computeBytesForSigning(tx));
-
-  const txHash = await provider.sendTransaction(tx);
+  const txHash = await signAndSend(tx, signer, senderAddress, provider);
   logger.info(`Execute tx broadcasted: ${txHash}`);
   return txHash;
 }

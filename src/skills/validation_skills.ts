@@ -1,19 +1,21 @@
 /**
  * Validation Skills — job lifecycle on the Validation Registry
  *
- * Uses SDK v15 patterns matching validator.ts:
- * createEntrypoint() → factory/controller → ABI-typed arguments.
+ * Uses the centralized chain/ layer.
  */
-import {Address, TransactionComputer} from '@multiversx/sdk-core';
-import {ApiNetworkProvider} from '@multiversx/sdk-network-providers';
-import {UserSigner} from '@multiversx/sdk-wallet';
-import {promises as fs} from 'fs';
-import * as path from 'path';
+import {Address} from '@multiversx/sdk-core';
 
 import {CONFIG} from '../config';
 import {Logger} from '../utils/logger';
-import {createEntrypoint} from '../utils/entrypoint';
-import {createPatchedAbi} from '../utils/abi';
+import {
+  loadSignerWithAddress,
+  createProvider,
+  createEntrypoint,
+  createPatchedAbi,
+  discoverRelayerAddress,
+  signAndSend,
+  withRelayer,
+} from '../chain';
 import * as validationAbiJson from '../abis/validation-registry.abi.json';
 
 const logger = new Logger('ValidationSkills');
@@ -42,21 +44,6 @@ export interface JobData {
   agent_nonce: bigint;
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
-
-async function loadSignerAndProvider() {
-  const pemPath =
-    process.env.MULTIVERSX_PRIVATE_KEY || path.resolve('wallet.pem');
-  const pemContent = await fs.readFile(pemPath, 'utf8');
-  const signer = UserSigner.fromPem(pemContent);
-  const senderAddress = new Address(signer.getAddress().bech32());
-  const provider = new ApiNetworkProvider(CONFIG.API_URL, {
-    clientName: 'moltbot-skills',
-    timeout: CONFIG.REQUEST_TIMEOUT,
-  });
-  return {signer, senderAddress, provider};
-}
-
 // ─── init_job ──────────────────────────────────────────────────────────────────
 
 export async function initJob(params: InitJobParams): Promise<string> {
@@ -64,7 +51,8 @@ export async function initJob(params: InitJobParams): Promise<string> {
     `Initializing job: ${params.jobId} for agent #${params.agentNonce}`,
   );
 
-  const {signer, senderAddress, provider} = await loadSignerAndProvider();
+  const {signer, senderAddress} = await loadSignerWithAddress();
+  const provider = createProvider('moltbot-skills');
 
   const entrypoint = createEntrypoint();
   const abi = createPatchedAbi(validationAbiJson);
@@ -89,26 +77,18 @@ export async function initJob(params: InitJobParams): Promise<string> {
     nativeTransferAmount: params.paymentAmount ?? 0n,
   });
 
-  const account = await provider.getAccount({
-    bech32: () => senderAddress.toBech32(),
-  });
-  tx.nonce = BigInt(account.nonce);
-
-  const computer = new TransactionComputer();
-  tx.signature = await signer.sign(computer.computeBytesForSigning(tx));
-
-  const txHash = await provider.sendTransaction(tx);
+  const txHash = await signAndSend(tx, signer, senderAddress, provider);
   logger.info(`init_job tx: ${txHash}`);
   return txHash;
 }
 
 // ─── submit_proof ──────────────────────────────────────────────────────────────
-// NOTE: This follows the exact pattern from Validator.submitProof() in validator.ts
 
 export async function submitProof(params: SubmitProofParams): Promise<string> {
   logger.info(`Submitting proof for ${params.jobId}: hash=${params.proofHash}`);
 
-  const {signer, senderAddress, provider} = await loadSignerAndProvider();
+  const {signer, senderAddress} = await loadSignerWithAddress();
+  const provider = createProvider('moltbot-skills');
 
   const entrypoint = createEntrypoint();
   const abi = createPatchedAbi(validationAbiJson);
@@ -126,32 +106,19 @@ export async function submitProof(params: SubmitProofParams): Promise<string> {
     ],
   });
 
-  const account = await provider.getAccount({
-    bech32: () => senderAddress.toBech32(),
-  });
-  tx.nonce = BigInt(account.nonce);
-
-  // Relayer V3
   if (params.useRelayer) {
-    const relayerAddr = process.env.MULTIVERSX_RELAYER_ADDRESS;
-    if (relayerAddr) {
-      tx.relayer = Address.newFromBech32(relayerAddr);
-      tx.version = 2;
-      tx.gasLimit =
-        BigInt(tx.gasLimit.toString()) + CONFIG.RELAYER_GAS_OVERHEAD;
+    const relayerBech = await discoverRelayerAddress(senderAddress);
+    if (relayerBech) {
+      withRelayer(tx, Address.newFromBech32(relayerBech));
     }
   }
 
-  const computer = new TransactionComputer();
-  tx.signature = await signer.sign(computer.computeBytesForSigning(tx));
-
-  const txHash = await provider.sendTransaction(tx);
+  const txHash = await signAndSend(tx, signer, senderAddress, provider);
   logger.info(`submit_proof tx: ${txHash}`);
   return txHash;
 }
 
 // ─── is_job_verified ───────────────────────────────────────────────────────────
-// Follows same pattern as hiring.ts::waitForJobVerification
 
 export async function isJobVerified(jobId: string): Promise<boolean> {
   const entrypoint = createEntrypoint();

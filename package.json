@@ -5,18 +5,19 @@
   "main": "dist/index.js",
   "scripts": {
     "setup": "bash setup.sh",
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "register": "ts-node scripts/register.ts",
     "update-manifest": "ts-node scripts/update_manifest.ts",
     "submit-job-proof": "ts-node scripts/submit-job-proof.ts",
+    "hire": "ts-node scripts/hiring.ts",
     "validation-request": "ts-node scripts/validation-request.ts",
     "validation-response": "ts-node scripts/validation-response.ts",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "lint": "gts lint",
     "clean": "gts clean",
-    "compile": "tsc",
+    "compile": "tsc -p tsconfig.build.json",
     "fix": "gts fix",
     "prepare": "npm run compile",
     "pretest": "npm run compile",
@@ -26,9 +27,9 @@
     "@multiversx/sdk-core": "^15.3.2",
     "@multiversx/sdk-network-providers": "^2.9.3",
     "@multiversx/sdk-wallet": "^4.6.0",
+    "@noble/hashes": "^1.3.0",
     "axios": "^1.6.0",
-    "dotenv": "^16.3.1",
-    "js-sha3": "^0.9.3"
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "@types/jest": "^29.0.0",
