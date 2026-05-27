@@ -51,8 +51,11 @@ MULTIVERSX_API_URL=https://devnet-api.multiversx.com
 
 # Core Services
 X402_FACILITATOR_URL=http://localhost:4000
+MCP_ENABLED=false
 ALLOWED_DOMAINS=example.com,api.myapp.com # SSRF Whitelist
 ```
+
+`MCP_ENABLED` is optional and disabled by default. Set it to `true` only if you want the agent to connect to an MCP endpoint.
 
 ### Step 5: Launch
 

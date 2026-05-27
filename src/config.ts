@@ -31,6 +31,7 @@ export const CONFIG = {
 
   // External Services
   PROVIDERS: {
+    MCP_ENABLED: process.env.MCP_ENABLED === 'true',
     MCP_URL: process.env.MULTIVERSX_MCP_URL || 'http://localhost:3000',
     FACILITATOR_URL:
       process.env.X402_FACILITATOR_URL || 'http://localhost:4000',

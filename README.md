@@ -9,12 +9,13 @@ A fully functional, hardened implementation of an OpenClaw Agent with a comprehe
 - ✅ **SDK v15+** — Modern `NetworkEntrypoint`, ABI factories, controllers
 - ✅ **14+ Agent Skills** — Identity, validation, reputation, escrow, transfers, discovery, hiring, manifest
 - ✅ **Production Hardened** — Central config, SSRF guards, retry logic, timeouts
-- ✅ **TDD Verified** — 86+ unit tests, mocked SDK for offline testing
+- ✅ **TDD Verified** — 93+ unit tests, mocked SDK for offline testing
 - ✅ **OASF Taxonomy** — Official 136 skill + 204 domain IDs for agent registration
 
 ## Installation
 
 Install via the OpenClaw one-liner (includes SKILL.md + references):
+
 ```bash
 curl -sL https://raw.githubusercontent.com/sasurobert/multiversx-openclaw-skills/master/scripts/install.sh | bash
 ```
@@ -54,6 +55,7 @@ First, copy the example file:
 ```bash
 cp manifest.config.example.json manifest.config.json
 ```
+
 Before using default values for configurations, always confirm with the user.  
 **Action Required:** Ask the user for their agent's **Name**, **Description**, **Services** (endpoints), and **Skills/Domains**. Once provided, update `manifest.config.json` with these details.
 
@@ -116,17 +118,17 @@ npx ts-node scripts/register.ts
 
 All skills live in `src/skills/` and are exported from `src/skills/index.ts`:
 
-| Skill File | Functions | Description |
-|:-----------|:----------|:-----------|
-| `identity_skills.ts` | `registerAgent`, `getAgent`, `setMetadata` | Agent identity on the Identity Registry |
-| `validation_skills.ts` | `initJob`, `submitProof`, `isJobVerified`, `getJobData` | Job lifecycle on the Validation Registry |
-| `reputation_skills.ts` | `submitFeedback`, `getReputation` | Feedback and reputation scores |
-| `escrow_skills.ts` | `deposit`, `release`, `refund`, `getEscrow` | Escrow fund management |
-| `transfer_skills.ts` | `transfer`, `multiTransfer` | EGLD, ESDT, NFT, SFT transfers |
-| `discovery_skills.ts` | `discoverAgents`, `getBalance` | Agent discovery + balance queries |
-| `hire_skills.ts` | `hireAgent` | Composite: init_job + escrow deposit |
-| `manifest_skills.ts` | `buildManifest`, `buildManifestJSON` | Registration manifest with OASF validation |
-| `oasf_taxonomy.ts` | `validateOASF`, lookups | Official OASF skill/domain taxonomy |
+| Skill File             | Functions                                               | Description                                |
+| :--------------------- | :------------------------------------------------------ | :----------------------------------------- |
+| `identity_skills.ts`   | `registerAgent`, `getAgent`, `setMetadata`              | Agent identity on the Identity Registry    |
+| `validation_skills.ts` | `initJob`, `submitProof`, `isJobVerified`, `getJobData` | Job lifecycle on the Validation Registry   |
+| `reputation_skills.ts` | `submitFeedback`, `getReputation`                       | Feedback and reputation scores             |
+| `escrow_skills.ts`     | `deposit`, `release`, `refund`, `getEscrow`             | Escrow fund management                     |
+| `transfer_skills.ts`   | `transfer`, `multiTransfer`                             | EGLD, ESDT, NFT, SFT transfers             |
+| `discovery_skills.ts`  | `discoverAgents`, `getBalance`                          | Agent discovery + balance queries          |
+| `hire_skills.ts`       | `hireAgent`                                             | Composite: init_job + escrow deposit       |
+| `manifest_skills.ts`   | `buildManifest`, `buildManifestJSON`                    | Registration manifest with OASF validation |
+| `oasf_taxonomy.ts`     | `validateOASF`, lookups                                 | Official OASF skill/domain taxonomy        |
 
 ## Project Structure
 
@@ -166,6 +168,11 @@ external services, gas/relayer settings, timeouts/retries, employer role,
 validation flow, and IPFS pinning — lives in [`.env.example`](./.env.example).
 Copy it (`cp .env.example .env`) and edit only what your deployment needs;
 every value has a sensible devnet default in `src/config.ts`.
+
+MCP integration is optional:
+
+- set `MCP_ENABLED=true` to turn it on (default is disabled),
+- use `MULTIVERSX_MCP_URL` for the HTTP MCP endpoint.
 
 ## Testing
 

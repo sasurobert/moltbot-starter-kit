@@ -37,7 +37,18 @@ async function main() {
     logger.warn('agent.config.json not found. See agent.config.example.json.');
   }
 
-  new McpBridge(CONFIG.PROVIDERS.MCP_URL);
+  const mcpBridge = new McpBridge();
+  if (CONFIG.PROVIDERS.MCP_ENABLED) {
+    void mcpBridge.verifyRequiredTools().then(mcpReady => {
+      if (!mcpReady) {
+        logger.warn(
+          'MCP bridge is degraded (missing tools or unreachable). Runtime fallbacks will be used.',
+        );
+      }
+    });
+  } else {
+    logger.info('MCP bridge disabled (MCP_ENABLED=false).');
+  }
   const validator = new Validator();
   const facilitator = new Facilitator();
   const processor = new JobProcessor();
@@ -77,6 +88,20 @@ async function main() {
 
   await facilitator.start();
   logger.info('Listening for x402 payments...');
+
+  const shutdown = async () => {
+    logger.info('Shutting down Moltbot...');
+    await facilitator.stop();
+    await mcpBridge.close();
+    process.exit(0);
+  };
+
+  process.once('SIGINT', () => {
+    void shutdown();
+  });
+  process.once('SIGTERM', () => {
+    void shutdown();
+  });
 }
 
 main().catch(err => logger.error('Fatal error in main loop', err));

@@ -24,6 +24,7 @@
     "posttest": "npm run lint"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@multiversx/sdk-core": "^15.3.2",
     "@multiversx/sdk-network-providers": "^2.9.3",
     "@multiversx/sdk-wallet": "^4.6.0",
