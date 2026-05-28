@@ -153,4 +153,59 @@ describe('Validator', () => {
       expect(axios.post).toHaveBeenCalledTimes(3);
     }, 10000);
   });
+
+  describe('edge and failure paths', () => {
+    test('registerAgent throws when relayer config is missing', async () => {
+      await expect(validator.registerAgent()).rejects.toThrow(
+        'Relayer not configured',
+      );
+    });
+
+    test('waitForTx throws on failed status', async () => {
+      jest.spyOn(validator, 'getTxStatus').mockResolvedValueOnce('failed');
+      await expect(validator.waitForTx('tx')).rejects.toThrow(
+        'Registration failed on-chain',
+      );
+    });
+
+    test('waitForTx throws timeout after max retries', async () => {
+      jest.useFakeTimers();
+      jest.spyOn(validator, 'getTxStatus').mockResolvedValue('pending');
+      const run = validator.waitForTx('tx');
+      const expectation = expect(run).rejects.toThrow('Registration timed out');
+      await jest.runAllTimersAsync();
+      await expectation;
+      jest.useRealTimers();
+    });
+
+    test('getTxStatus returns not_found on 404-like errors', async () => {
+      mockProvider.getTransaction.mockRejectedValueOnce({
+        response: {status: 404},
+      });
+      await expect(validator.getTxStatus('tx')).resolves.toBe('not_found');
+    });
+
+    test('getTxStatus returns unknown on non-404 errors', async () => {
+      mockProvider.getTransaction.mockRejectedValueOnce(new Error('other'));
+      await expect(validator.getTxStatus('tx')).resolves.toBe('unknown');
+    });
+
+    test('submitProof surfaces auto-registration failure when registerAgent fails', async () => {
+      validator.setRelayerConfig('http://mock-relayer', RELAYER);
+      jest
+        .spyOn(validator, 'registerAgent')
+        .mockRejectedValueOnce(new Error('challenge failed'));
+
+      (axios.post as jest.Mock).mockRejectedValueOnce({
+        response: {
+          status: 403,
+          data: {code: 'AGENT_NOT_REGISTERED', error: 'x'},
+        },
+      });
+
+      await expect(validator.submitProof('job-x', 'abcd')).rejects.toThrow(
+        'challenge failed',
+      );
+    });
+  });
 });

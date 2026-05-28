@@ -84,9 +84,6 @@ export class Facilitator {
       if (Array.isArray(events)) {
         for (const payment of events) {
           this.emitter.emit('payment', payment);
-          if (this.listener) {
-            await this.listener(payment);
-          }
         }
       }
       this.consecutiveFailures = 0;

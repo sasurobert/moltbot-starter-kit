@@ -141,4 +141,43 @@ describe('McpBridge', () => {
     const bridge = new McpBridge('http://localhost:3000/mcp');
     await expect(bridge.verifyRequiredTools()).resolves.toBe(true);
   });
+
+  test('returns false when required MCP tools are missing', async () => {
+    mockListTools.mockResolvedValue({
+      tools: [{name: 'get_agent_reputation'}],
+    });
+
+    const bridge = new McpBridge('http://localhost:3000/mcp');
+    await expect(bridge.verifyRequiredTools()).resolves.toBe(false);
+  });
+
+  test('extracts gas price from text fallback payload', async () => {
+    mockCallTool.mockResolvedValue({
+      isError: false,
+      content: [{type: 'text', text: '{"gasPrice":"12345"}'}],
+    });
+
+    const bridge = new McpBridge('http://localhost:3000/mcp');
+    await expect(bridge.getGasPrice()).resolves.toBe('12345');
+  });
+
+  test('returns default reputation when tool responds with isError=true', async () => {
+    mockCallTool.mockResolvedValue({
+      isError: true,
+      content: [],
+    });
+
+    const bridge = new McpBridge('http://localhost:3000/mcp');
+    await expect(bridge.getAgentReputation(1)).resolves.toBe(50);
+  });
+
+  test('throws on internal ensureConnected after bridge close', async () => {
+    const bridge = new McpBridge('http://localhost:3000/mcp');
+    await bridge.close();
+
+    const ensureConnected = (
+      bridge as unknown as {ensureConnected: () => Promise<unknown>}
+    ).ensureConnected.bind(bridge);
+    await expect(ensureConnected()).rejects.toThrow('McpBridge is closed');
+  });
 });
