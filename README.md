@@ -129,6 +129,7 @@ All skills live in `src/skills/` and are exported from `src/skills/index.ts`:
 | `hire_skills.ts`       | `hireAgent`                                             | Composite: init_job + escrow deposit       |
 | `manifest_skills.ts`   | `buildManifest`, `buildManifestJSON`                    | Registration manifest with OASF validation |
 | `oasf_taxonomy.ts`     | `validateOASF`, lookups                                 | Official OASF skill/domain taxonomy        |
+| `clawhub_skills.ts`    | `pullClawHubSkill`                                      | Download skills from ClawHub registry      |
 
 ## Project Structure
 
@@ -145,7 +146,8 @@ moltbot-starter-kit/
 │   │   ├── discovery_skills.ts
 │   │   ├── hire_skills.ts
 │   │   ├── manifest_skills.ts
-│   │   └── oasf_taxonomy.ts
+│   │   ├── oasf_taxonomy.ts
+│   │   └── clawhub_skills.ts
 │   ├── chain/            ← Signer, provider, tx, relayer, ABI (shared boilerplate)
 │   ├── abis/             ← Smart contract ABIs (single source of truth)
 │   ├── utils/            ← Logger, RelayerAddressCache, ABI patching
@@ -153,7 +155,7 @@ moltbot-starter-kit/
 │   ├── validator.ts      ← Proof submission + auto-registration
 │   ├── facilitator.ts    ← x402 facilitator client (EventEmitter + backoff)
 │   └── index.ts          ← Main agent loop
-├── scripts/              ← register.ts, update_manifest.ts, build_manifest.ts, hiring.ts
+├── scripts/              ← register.ts, update_manifest.ts, build_manifest.ts, upload_skill.ts, pull_skill.ts, hiring.ts
 ├── tests/                ← 86 unit tests (22 suites)
 ├── tsconfig.json         ← Permissive — used by ts-jest / ts-node
 ├── tsconfig.build.json   ← Narrow (src/ only) — used by `npm run build`
@@ -165,7 +167,8 @@ moltbot-starter-kit/
 
 The full list of supported variables — wallet, network, contract addresses,
 external services, gas/relayer settings, timeouts/retries, employer role,
-validation flow, and IPFS pinning — lives in [`.env.example`](./.env.example).
+validation flow, IPFS pinning, and ClawHub deployment — lives in
+[`.env.example`](./.env.example).
 Copy it (`cp .env.example .env`) and edit only what your deployment needs;
 every value has a sensible devnet default in `src/config.ts`.
 

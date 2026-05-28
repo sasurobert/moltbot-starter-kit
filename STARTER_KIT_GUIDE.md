@@ -90,9 +90,17 @@ The `Validator` includes automatic retry logic (3 attempts with backoff) for sub
   ```bash
   npx ts-node scripts/update_manifest.ts
   ```
-- **Deploy Skills**: Simulate packaging and deploying skills to the registry.
+- **Upload Skills**: Publish local skill files to ClawHub (or preview with dry-run).
   ```bash
-  npx ts-node scripts/deploy_skill.ts
+  npx ts-node scripts/upload_skill.ts
+  ```
+  ```bash
+  # Preview without uploading
+  npx ts-node scripts/upload_skill.ts --dry-run --path ./skills/my-skill
+  ```
+- **Pull Skills**: Download a skill archive from ClawHub.
+  ```bash
+  npx ts-node scripts/pull_skill.ts --slug my-skill
   ```
 
 ## 5. Deployment

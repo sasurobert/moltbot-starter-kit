@@ -129,3 +129,9 @@ export {
   type ContractQueryParams,
   type ContractExecuteParams,
 } from './smart_contract_skills';
+
+export {
+  pullClawHubSkill,
+  type PullClawHubSkillParams,
+  type PullClawHubSkillResult,
+} from './clawhub_skills';
