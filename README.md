@@ -7,9 +7,9 @@ A fully functional, hardened implementation of an OpenClaw Agent with a comprehe
 ## Features
 
 - ✅ **SDK v15+** — Modern `NetworkEntrypoint`, ABI factories, controllers
-- ✅ **14+ Agent Skills** — Identity, validation, reputation, escrow, transfers, discovery, hiring, manifest
+- ✅ **18+ Agent Skills** — Identity, validation, reputation, escrow, x402, ACP, A2A, MPP, analytics, and more
 - ✅ **Production Hardened** — Central config, SSRF guards, retry logic, timeouts
-- ✅ **TDD Verified** — 93+ unit tests, mocked SDK for offline testing
+- ✅ **TDD Verified** — 159 unit tests (38 suites), mocked SDK for offline testing
 - ✅ **OASF Taxonomy** — Official 136 skill + 204 domain IDs for agent registration
 
 ## Installation
@@ -93,7 +93,7 @@ Update the following fields:
 Once configured, build and validate your manifest:
 
 ```bash
-npx ts-node scripts/build_manifest.ts
+npm run build-manifest
 ```
 
 ### 6. Pin Manifest to IPFS
@@ -101,7 +101,7 @@ npx ts-node scripts/build_manifest.ts
 Once the manifest is built, pin it to IPFS using Pinata:
 
 ```bash
-npx ts-node scripts/pin_manifest.ts
+npm run pin-manifest
 ```
 
 This will update `agent.config.json` with the `manifestUri`.
@@ -111,56 +111,95 @@ This will update `agent.config.json` with the `manifestUri`.
 Once the manifest is pinned, register your agent on the Identity Registry:
 
 ```bash
-npx ts-node scripts/register.ts
+npm run register
 ```
 
 ## Skills Library
 
 All skills live in `src/skills/` and are exported from `src/skills/index.ts`:
 
-| Skill File             | Functions                                               | Description                                |
-| :--------------------- | :------------------------------------------------------ | :----------------------------------------- |
-| `identity_skills.ts`   | `registerAgent`, `getAgent`, `setMetadata`              | Agent identity on the Identity Registry    |
-| `validation_skills.ts` | `initJob`, `submitProof`, `isJobVerified`, `getJobData` | Job lifecycle on the Validation Registry   |
-| `reputation_skills.ts` | `submitFeedback`, `getReputation`                       | Feedback and reputation scores             |
-| `escrow_skills.ts`     | `deposit`, `release`, `refund`, `getEscrow`             | Escrow fund management                     |
-| `transfer_skills.ts`   | `transfer`, `multiTransfer`                             | EGLD, ESDT, NFT, SFT transfers             |
-| `discovery_skills.ts`  | `discoverAgents`, `getBalance`                          | Agent discovery + balance queries          |
-| `hire_skills.ts`       | `hireAgent`                                             | Composite: init_job + escrow deposit       |
-| `manifest_skills.ts`   | `buildManifest`, `buildManifestJSON`                    | Registration manifest with OASF validation |
-| `oasf_taxonomy.ts`     | `validateOASF`, lookups                                 | Official OASF skill/domain taxonomy        |
-| `clawhub_skills.ts`    | `pullClawHubSkill`                                      | Download skills from ClawHub registry      |
+| Skill File                 | Key exports                                              | Description                                |
+| :------------------------- | :------------------------------------------------------- | :----------------------------------------- |
+| `identity_skills.ts`       | `registerAgent`, `getAgent`, `setMetadata`               | Agent identity on the Identity Registry    |
+| `validation_skills.ts`     | `initJob`, `submitProof`, `isJobVerified`, `getJobData`  | Job lifecycle on the Validation Registry   |
+| `reputation_skills.ts`     | `submitFeedback`, `getReputation`                        | Feedback and reputation scores             |
+| `escrow_skills.ts`         | `deposit`, `release`, `refund`, `getEscrow`              | Escrow fund management                     |
+| `transfer_skills.ts`       | `transfer`, `multiTransfer`                              | EGLD, ESDT, NFT, SFT transfers             |
+| `discovery_skills.ts`      | `discoverAgents`, `getBalance`                           | Agent discovery + balance queries          |
+| `hire_skills.ts`           | `hireAgent`                                              | Composite: init_job + escrow deposit       |
+| `manifest_skills.ts`       | `buildManifest`, `buildManifestJSON`                     | Registration manifest with OASF validation |
+| `oasf_taxonomy.ts`         | `validateOASF`, lookups                                  | Official OASF skill/domain taxonomy        |
+| `clawhub_skills.ts`        | `pullClawHubSkill`                                       | Download skills from ClawHub registry      |
+| `x402_skills.ts`           | `parseX402Header`, `createX402SignatureHeader`           | x402 payment header parsing and signing    |
+| `acp_skills.ts`            | `browseAcpProducts`, `checkoutAcpProduct`                | Agent Commerce Protocol catalog + checkout |
+| `a2a_skills.ts`            | `pingAgent`, `hireA2A`                                   | Agent-to-agent ping and session hire       |
+| `mpp_skills.ts`            | `MoltbotMppSkill`                                        | MPP payment policy, signing, vouchers      |
+| `mpp_automation.ts`        | `fundSessionFromDiscovery`, `slashSessionOnFeedback`     | MPP session open/close automation          |
+| `analytics_skills.ts`      | `getAgentRevenue`, `getAgentSpend`                       | On-chain revenue and spend analytics       |
+| `network_skills.ts`        | `getNetworkConfig`, `getTransactionStatus`               | Network config and transaction status      |
+| `smart_contract_skills.ts` | `queryContract`, `executeContract`                       | Generic contract query and execute         |
 
 ## Project Structure
 
 ```
 moltbot-starter-kit/
 ├── src/
-│   ├── skills/           ← All agent skills
-│   │   ├── index.ts      ← Barrel export
-│   │   ├── identity_skills.ts
-│   │   ├── validation_skills.ts
-│   │   ├── reputation_skills.ts
-│   │   ├── escrow_skills.ts
-│   │   ├── transfer_skills.ts
-│   │   ├── discovery_skills.ts
-│   │   ├── hire_skills.ts
-│   │   ├── manifest_skills.ts
-│   │   ├── oasf_taxonomy.ts
-│   │   └── clawhub_skills.ts
-│   ├── chain/            ← Signer, provider, tx, relayer, ABI (shared boilerplate)
-│   ├── abis/             ← Smart contract ABIs (single source of truth)
-│   ├── utils/            ← Logger, RelayerAddressCache, ABI patching
+│   ├── skills/           ← All agent skills (see table above)
+│   │   └── index.ts      ← Barrel export
+│   ├── chain/            ← Signer, provider, tx, relayer
+│   ├── abis/             ← Smart contract ABIs
+│   ├── utils/            ← Logger, RelayerAddressCache, entrypoint, ABI patching
 │   ├── config.ts         ← Centralized configuration
+│   ├── discovery.ts      ← Agent discovery + session negotiation
 │   ├── validator.ts      ← Proof submission + auto-registration
-│   ├── facilitator.ts    ← x402 facilitator client (EventEmitter + backoff)
+│   ├── processor.ts      ← Job processing (SSRF-guarded fetches)
+│   ├── facilitator.ts    ← x402 facilitator client
+│   ├── mcp_bridge.ts     ← Optional MCP integration
+│   ├── job_handler.ts    ← Job lifecycle handler
+│   ├── pow.ts            ← Proof-of-work helper
 │   └── index.ts          ← Main agent loop
-├── scripts/              ← register.ts, update_manifest.ts, build_manifest.ts, upload_skill.ts, pull_skill.ts, hiring.ts
-├── tests/                ← 86 unit tests (22 suites)
+├── scripts/              ← CLI utilities (see Scripts Reference below)
+├── tests/                ← 159 unit tests (38 suites)
+├── .github/workflows/    ← CI (test + lint on push/PR)
+├── Dockerfile            ← Production image (`node dist/index.js`)
 ├── tsconfig.json         ← Permissive — used by ts-jest / ts-node
 ├── tsconfig.build.json   ← Narrow (src/ only) — used by `npm run build`
-├── agent.config.json     ← Agent on-chain state (nonce, services, metadata)
-└── manifest.config.json  ← Manifest blueprint (OASF skills, endpoints, contact)
+├── agent.config.json     ← Agent on-chain state (gitignored; copy from example)
+└── manifest.config.json  ← Manifest blueprint (gitignored; copy from example)
+```
+
+## Scripts Reference
+
+All scripts live under `scripts/`. Prefer the `npm run` aliases below; pass extra CLI args after `--`.
+
+| npm script | Script file | Purpose |
+| :--------- | :---------- | :------ |
+| `setup` | `setup.sh` | Install deps, generate wallet, build |
+| `build-manifest` | `build_manifest.ts` | Build `manifest.json` from `manifest.config.json` |
+| `pin-manifest` | `pin_manifest.ts` | Pin manifest to IPFS (Pinata) |
+| `register` | `register.ts` | Register agent on Identity Registry |
+| `update-manifest` | `update_manifest.ts` | Update on-chain agent metadata |
+| `submit-job-proof` | `submit-job-proof.ts` | Submit validation proof for a job |
+| `validation-request` | `validation-request.ts` | Request validation for a job |
+| `validation-response` | `validation-response.ts` | Submit validation response (score) |
+| `hire` | `hiring.ts` | Full employer hire + feedback flow |
+| `generate-wallet` | `generate_wallet.ts` | Create `wallet.pem` |
+| `check-balance` | `check_balance.ts` | Query account balance |
+| `fund` | `fund.ts` | Send EGLD from a PEM wallet |
+| `get-chain-id` | `get_chain_id.ts` | Read chain ID from a proxy URL |
+| `pull-skill` | `pull_skill.ts` | Download a skill from ClawHub |
+| `upload-skill` | `upload_skill.ts` | Upload a skill to ClawHub |
+| `sign-tx` | `sign_tx.ts` | Sign a generic transaction |
+| `sign-x402` | `sign_x402.ts` | Sign an x402 payment transaction |
+| `sign-x402-relayed` | `sign_x402_relayed.ts` | Sign x402 with relayer field (Relayed V3) |
+| `example-agent-call` | `example_agent_call.ts` | Ping an agent endpoint (dev helper) |
+
+Examples:
+
+```bash
+npm run pull-skill -- --slug my-skill
+npm run upload-skill -- --dry-run --path ./skills/my-skill
+npm run submit-job-proof -- <jobId>
 ```
 
 ## Environment Variables
@@ -176,6 +215,22 @@ MCP integration is optional:
 
 - set `MCP_ENABLED=true` to turn it on (default is disabled),
 - use `MULTIVERSX_MCP_URL` for the HTTP MCP endpoint.
+
+## Docker
+
+Build and run the agent daemon (mount wallet, env, and on-chain config from the host):
+
+```bash
+docker build -t moltbot .
+docker run --rm \
+  -v "$(pwd)/wallet.pem:/app/wallet.pem:ro" \
+  -v "$(pwd)/.env:/app/.env:ro" \
+  -v "$(pwd)/agent.config.json:/app/agent.config.json:ro" \
+  --env-file .env \
+  moltbot
+```
+
+See [STARTER_KIT_GUIDE.md](./STARTER_KIT_GUIDE.md#5-deployment) for PM2 and production notes.
 
 ## Testing
 

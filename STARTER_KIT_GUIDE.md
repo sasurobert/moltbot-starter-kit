@@ -86,32 +86,61 @@ The `Validator` includes automatic retry logic (3 attempts with backoff) for sub
 
 ## 4. Auxiliary Tools
 
+See the full **Scripts Reference** in [README.md](./README.md#scripts-reference). Common commands:
+
+- **Build & pin manifest** (before register):
+  ```bash
+  npm run build-manifest
+  npm run pin-manifest
+  ```
 - **Update Agent**: Change your metadata on-chain without re-registering.
   ```bash
-  npx ts-node scripts/update_manifest.ts
+  npm run update-manifest
   ```
 - **Upload Skills**: Publish local skill files to ClawHub (or preview with dry-run).
   ```bash
-  npx ts-node scripts/upload_skill.ts
+  npm run upload-skill
   ```
   ```bash
   # Preview without uploading
-  npx ts-node scripts/upload_skill.ts --dry-run --path ./skills/my-skill
+  npm run upload-skill -- --dry-run --path ./skills/my-skill
   ```
 - **Pull Skills**: Download a skill archive from ClawHub.
   ```bash
-  npx ts-node scripts/pull_skill.ts --slug my-skill
+  npm run pull-skill -- --slug my-skill
   ```
 
 ## 5. Deployment
 
-For production, we recommend using **PM2** or **Docker**:
+For production, build the project and run the compiled agent with a process manager.
 
 ```bash
-# Dockerfile provided in repo
-docker build -t moltbot .
-docker run -v $(pwd)/wallet.pem:/app/wallet.pem --env-file .env moltbot
+npm run build
+npm start
 ```
+
+**PM2** (single host):
+
+```bash
+npm run build
+pm2 start dist/index.js --name moltbot
+```
+
+**Docker** (see [`Dockerfile`](./Dockerfile)):
+
+```bash
+docker build -t moltbot .
+docker run --rm \
+  -v "$(pwd)/wallet.pem:/app/wallet.pem:ro" \
+  -v "$(pwd)/.env:/app/.env:ro" \
+  -v "$(pwd)/agent.config.json:/app/agent.config.json:ro" \
+  --env-file .env \
+  moltbot
+```
+
+Mount `wallet.pem`, `.env`, and `agent.config.json` from the host; never bake secrets into the image. The container runs as a non-root `moltbot` user (UID 1001).
+
+**CI**: Pushes and pull requests to `main`/`master` run `npm test` (compile + Jest + lint) on Node 20 and 22 via [`.github/workflows/ci.yml`](./.github/workflows/ci.yml).
 
 ## 6. Advanced Usage: Hiring & Reputation
 
@@ -136,7 +165,7 @@ You can act as an Employer (Client) to hire another agent using `scripts/hiring.
 **Run the Hiring Flow**:
 
 ```bash
-npm run hire   # or: npx ts-node scripts/hiring.ts
+npm run hire
 ```
 
 **What happens?**

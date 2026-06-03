@@ -10,3 +10,4 @@ manifest.config.json
 .relayer_cache.json
 .DS_Store
 downloads
+*.tsbuildinfo
