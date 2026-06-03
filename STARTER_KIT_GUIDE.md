@@ -140,7 +140,7 @@ docker run --rm \
 
 Mount `wallet.pem`, `.env`, and `agent.config.json` from the host; never bake secrets into the image. The container runs as a non-root `moltbot` user (UID 1001).
 
-**CI**: Pushes and pull requests to `main`/`master` run `npm test` (compile + Jest + lint) on Node 20 and 22 via [`.github/workflows/ci.yml`](./.github/workflows/ci.yml).
+**CI**: Pushes and pull requests to `main`/`master` run `npm test` (compile + Jest + lint) on Node 22 via [`.github/workflows/ci.yml`](./.github/workflows/ci.yml).
 
 ## 6. Advanced Usage: Hiring & Reputation
 
