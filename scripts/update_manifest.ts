@@ -4,7 +4,6 @@ import {
   TransactionComputer,
   SmartContractTransactionsFactory,
   TransactionsFactoryConfig,
-  Abi,
   VariadicValue,
   Struct,
   BytesValue,
@@ -31,6 +30,8 @@ import {promises as fs} from 'fs';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import {CONFIG} from '../src/config';
+import {createPatchedAbi} from '../src/utils/abi';
+import * as identityAbiJson from '../src/abis/identity-registry.abi.json';
 
 dotenv.config();
 
@@ -39,7 +40,6 @@ const txComputer = new TransactionComputer();
 async function main() {
   console.log('🚀 Starting Manifest Update...');
 
-  // 1. Setup Provider & Signer
   const providerUrl = process.env.MULTIVERSX_API_URL || CONFIG.API_URL;
   const isLocal =
     providerUrl.includes('localhost') || providerUrl.includes('127.0.0.1');
@@ -64,7 +64,6 @@ async function main() {
   const signer = UserSigner.fromPem(pemContent);
   const senderAddress = new Address(signer.getAddress().bech32());
 
-  // 2. Load Config
   const configPath = path.resolve('agent.config.json');
   const config: {
     agentName: string;
@@ -81,7 +80,6 @@ async function main() {
 
   console.log(`Updating Agent: ${config.agentName}`);
 
-  // 3. Validate agent nonce
   const registryAddress =
     process.env.IDENTITY_REGISTRY_ADDRESS || CONFIG.ADDRESSES.IDENTITY_REGISTRY;
   if (!registryAddress) {
@@ -100,16 +98,7 @@ async function main() {
     bech32: () => senderAddress.toBech32(),
   });
 
-  // 4. Load ABI and build transaction using SmartContractTransactionsFactory
-  const abiPath = path.resolve(__dirname, '..', 'identity-registry.abi.json');
-  const rawAbiStr = (await fs.readFile(abiPath, 'utf8'))
-    .replace(/\bTokenId\b/g, 'TokenIdentifier')
-    .replace(/\bNonZeroBigUint\b/g, 'BigUint')
-    .replace(/\bcounted-variadic\b/g, 'variadic')
-    .replace(/\bList</g, 'variadic<')
-    .replace(/\bPayment\b/g, 'EgldOrEsdtTokenPayment');
-  const abiJson = JSON.parse(rawAbiStr);
-  const abi = Abi.create(abiJson);
+  const abi = createPatchedAbi(identityAbiJson);
 
   const factoryConfig = new TransactionsFactoryConfig({
     chainID: process.env.MULTIVERSX_CHAIN_ID || CONFIG.CHAIN_ID,
@@ -119,12 +108,11 @@ async function main() {
     abi,
   });
 
-  // 5. Prepare arguments matching ABI: update_agent(new_name, new_uri, new_public_key, metadata?, services?)
+  // ABI: update_agent(new_name, new_uri, new_public_key, metadata?, services?)
   const newUri =
     config.manifestUri || `https://agent.molt.bot/${config.agentName}`;
   const publicKeyHex = senderAddress.toHex();
 
-  // Build metadata entries
   const metadataType = new StructType('MetadataEntry', [
     new FieldDefinition('key', '', new BytesType()),
     new FieldDefinition('value', '', new BytesType()),
@@ -152,7 +140,8 @@ async function main() {
   if (config.metadata?.length > 0)
     console.log(`Metadata: ${config.metadata.length} entries`);
 
-  // 6. Get the agent token ID from the registry (vmQuery)
+  // The registry's nft-token-id is needed for the MultiESDTNFTTransfer that
+  // carries the agent's nonce when calling update_agent.
   let tokenId = '';
   try {
     const queryResponse = await provider.queryContract({
@@ -160,18 +149,15 @@ async function main() {
       func: 'get_agent_token_id',
       getEncodedArguments: () => [],
     });
-    // Token ID is returned as a hex-encoded string
-    const hexTokenId = Buffer.from(
-      queryResponse.getReturnDataParts()[0],
-    ).toString('utf8');
-    tokenId = hexTokenId;
+    tokenId = Buffer.from(queryResponse.getReturnDataParts()[0]).toString(
+      'utf8',
+    );
     console.log(`Agent Token ID: ${tokenId}`);
   } catch (e) {
     console.error('❌ Failed to query agent token ID:', (e as Error).message);
     process.exit(1);
   }
 
-  // Construct the ServiceConfigInput StructType manually.
   const serviceConfigType = new StructType('ServiceConfigInput', [
     new FieldDefinition('service_id', '', new U32Type()),
     new FieldDefinition('price', '', new BigUIntType()),
@@ -190,11 +176,11 @@ async function main() {
   );
 
   const scArgs = [
-    Buffer.from(config.agentName), // new_name
-    Buffer.from(newUri), // new_uri
-    Buffer.from(publicKeyHex, 'hex'), // new_public_key
-    VariadicValue.fromItemsCounted(...metadataTyped), // metadata
-    VariadicValue.fromItemsCounted(...servicesTyped), // services
+    Buffer.from(config.agentName),
+    Buffer.from(newUri),
+    Buffer.from(publicKeyHex, 'hex'),
+    VariadicValue.fromItemsCounted(...metadataTyped),
+    VariadicValue.fromItemsCounted(...servicesTyped),
   ];
 
   const tx = await factory.createTransactionForExecute(senderAddress, {
@@ -212,14 +198,12 @@ async function main() {
 
   tx.nonce = BigInt(account.nonce);
 
-  // 7. Sign
   const serialized = txComputer.computeBytesForSigning(tx);
   const signature = await signer.sign(serialized);
   tx.signature = signature;
 
   console.log('Transaction Signed. Broadcasting...');
 
-  // 8. Broadcast
   try {
     const txHash = await provider.sendTransaction(tx);
     console.log(`✅ Update Transaction Sent: ${txHash}`);

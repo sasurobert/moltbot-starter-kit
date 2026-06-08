@@ -17,10 +17,10 @@ describe('Async Job Flow', () => {
       meta: {jobId: 'job-1', payload: 'test-payload'},
     };
 
-    // Mock Processor
     jest.spyOn(processor, 'process').mockResolvedValue('hash-123');
 
-    // Mock Validator to Delay
+    // Stage a controllable proof submission so we can measure that the
+    // listener returns before the promise settles.
     let resolveProof: (value: string) => void;
     const proofPromise = new Promise<string>(resolve => {
       resolveProof = resolve;
@@ -32,18 +32,13 @@ describe('Async Job Flow', () => {
         return proofPromise;
       });
 
-    // Trigger Flow
-    // We simulate the listener logic from index.ts manually since we can't import the main function easily as a library
-    // So we replicate the 'fire-and-forget' logic here to test IT works if implemented that way.
-    // Wait, unit testing 'index.ts' is hard because it's a script.
-    // We should probably rely on manual verification or integration test if we had the full app running.
-    // BUT, we can test the PATTERN here.
-
+    // Replicate index.ts's fire-and-forget listener inline. We can't import
+    // main() directly (it's a script), so this asserts the pattern works
+    // for any implementation that follows it.
     const listenerLogic = async (p: {
       meta: {jobId: string; payload: string};
     }) => {
       const hash = await processor.process(p.meta);
-      // The async pattern:
       void validator.submitProof(p.meta.jobId, hash).then(console.log);
     };
 
@@ -51,11 +46,10 @@ describe('Async Job Flow', () => {
     await listenerLogic(payment);
     const end = Date.now();
 
-    // Should return IMMEDIATELY (processing is fast, submission is slow)
+    // Listener must return before submitProof resolves (proof is gated below).
     expect(end - start).toBeLessThan(50);
     expect(submitProofSpy).toHaveBeenCalled();
 
-    // Now resolve proof
     resolveProof!('tx-hash-123');
     await expect(proofPromise).resolves.toBe('tx-hash-123');
   });

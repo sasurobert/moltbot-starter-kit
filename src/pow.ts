@@ -3,10 +3,10 @@ import {Logger} from './utils/logger';
 
 export interface Challenge {
   address: string;
-  target: string;
   salt: string;
   difficulty: number;
-  expiresAt: number;
+  target?: string;
+  expiresAt?: number;
 }
 
 export class PoWSolver {
@@ -30,10 +30,12 @@ export class PoWSolver {
       }
 
       nonce++;
-      if (nonce % 100000 === 0) {
-        if (Date.now() > challenge.expiresAt) {
-          throw new Error('Challenge expired during solving');
-        }
+      if (
+        challenge.expiresAt !== undefined &&
+        nonce % 100000 === 0 &&
+        Date.now() > challenge.expiresAt
+      ) {
+        throw new Error('Challenge expired during solving');
       }
     }
   }

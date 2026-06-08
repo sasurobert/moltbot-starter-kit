@@ -1,16 +1,19 @@
 /**
  * Discovery Skills — agent search and balance queries
  *
- * Uses SDK v15 controller.query for identity lookups + API for balances.
+ * Uses controller.query for identity lookups + API for balances.
  */
 import {Address} from '@multiversx/sdk-core';
-import {ApiNetworkProvider} from '@multiversx/sdk-network-providers';
 import axios from 'axios';
 
 import {CONFIG} from '../config';
 import {Logger} from '../utils/logger';
-import {createEntrypoint} from '../utils/entrypoint';
-import {createPatchedAbi} from '../utils/abi';
+import {
+  createEntrypoint,
+  createPatchedAbi,
+  createProvider,
+  loadSignerWithAddress,
+} from '../chain';
 import * as identityAbiJson from '../abis/identity-registry.abi.json';
 
 const logger = new Logger('DiscoverySkills');
@@ -41,7 +44,6 @@ export interface BalanceResult {
 }
 
 // ─── discoverAgents ────────────────────────────────────────────────────────────
-// Uses BlockchainService pattern (controller.query)
 
 export async function discoverAgents(
   params: DiscoverParams = {},
@@ -77,7 +79,7 @@ export async function discoverAgents(
         uri: agent.uri,
       });
     } catch {
-      break; // No more agents
+      break;
     }
   }
 
@@ -86,37 +88,25 @@ export async function discoverAgents(
 }
 
 // ─── getBalance ────────────────────────────────────────────────────────────────
-// Uses the public API (not SC queries)
 
 export async function getBalance(address?: string): Promise<BalanceResult> {
-  // Default to own wallet address
   let targetAddress = address;
   if (!targetAddress) {
-    const {UserSigner} = await import('@multiversx/sdk-wallet');
-    const {promises: fs} = await import('fs');
-    const pemPath = process.env.MULTIVERSX_PRIVATE_KEY || './wallet.pem';
-    const pemContent = await fs.readFile(pemPath, 'utf8');
-    const signer = UserSigner.fromPem(pemContent);
-    targetAddress = new Address(signer.getAddress().bech32()).toBech32();
+    const {senderAddress} = await loadSignerWithAddress();
+    targetAddress = senderAddress.toBech32();
   }
 
-  const apiUrl = CONFIG.API_URL;
-
-  // EGLD
-  const provider = new ApiNetworkProvider(apiUrl, {
-    clientName: 'moltbot-skills',
-    timeout: CONFIG.REQUEST_TIMEOUT,
-  });
+  const provider = createProvider('moltbot-skills');
   const account = await provider.getAccount({
     bech32: () => targetAddress!,
   });
 
-  // ESDTs
   let tokens: TokenBalance[] = [];
   try {
-    const resp = await axios.get(`${apiUrl}/accounts/${targetAddress}/tokens`, {
-      timeout: CONFIG.REQUEST_TIMEOUT,
-    });
+    const resp = await axios.get(
+      `${CONFIG.API_URL}/accounts/${targetAddress}/tokens`,
+      {timeout: CONFIG.REQUEST_TIMEOUT},
+    );
     tokens = (resp.data as TokenBalance[]) || [];
   } catch {
     logger.warn('Could not fetch ESDT balances');

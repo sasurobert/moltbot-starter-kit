@@ -39,11 +39,12 @@ export async function hireA2A(
 ): Promise<A2ANegotiationResult> {
   logger.info(`Starting A2A hire process for agent: ${agentAddress}`);
 
-  // Mock skills for the existing automation suite
+  // TODO: replace these stubs with real IdentitySkill / MPPSkill instances
+  // once those classes are wired through. For now, the automation harness
+  // expects objects with these method names.
   const identitySkill = {getAgentPricing: async () => 100000000000000n};
   const mppSkill = {openSession: async () => 'mocked-channel-id'};
 
-  // Step 1: Fund the session (which internally discovers the agent via mx8004)
   const channelId = await fundSessionFromDiscovery(
     identitySkill,
     mppSkill,

@@ -92,11 +92,46 @@ export {
 // MPP Interceptor
 export {MoltbotMppSkill, type AgentSpendingPolicy} from './mpp_skills';
 
-// Ecosystem Integrations
-export * from './mpp_automation';
-export * from './x402_skills';
-export * from './acp_skills';
-export * from './a2a_skills';
-export * from './analytics_skills';
-export * from './network_skills';
-export * from './smart_contract_skills';
+// Ecosystem Integrations — explicit named re-exports avoid name collisions
+// and make it obvious from the barrel file what is part of the public surface.
+export {
+  fundSessionFromDiscovery,
+  slashSessionOnFeedback,
+} from './mpp_automation';
+
+export {
+  parseX402Header,
+  createX402SignatureHeader,
+  type X402PaymentRequest,
+} from './x402_skills';
+
+export {
+  browseAcpProducts,
+  checkoutAcpProduct,
+  type AcpProduct,
+  type AcpCheckoutPayload,
+} from './acp_skills';
+
+export {pingAgent, hireA2A, type A2ANegotiationResult} from './a2a_skills';
+
+export {getAgentRevenue, getAgentSpend} from './analytics_skills';
+
+export {
+  getNetworkConfig,
+  getTransactionStatus,
+  type NetworkConfig,
+  type TransactionStatus,
+} from './network_skills';
+
+export {
+  queryContract,
+  executeContract,
+  type ContractQueryParams,
+  type ContractExecuteParams,
+} from './smart_contract_skills';
+
+export {
+  pullClawHubSkill,
+  type PullClawHubSkillParams,
+  type PullClawHubSkillResult,
+} from './clawhub_skills';

@@ -51,8 +51,11 @@ MULTIVERSX_API_URL=https://devnet-api.multiversx.com
 
 # Core Services
 X402_FACILITATOR_URL=http://localhost:4000
+MCP_ENABLED=false
 ALLOWED_DOMAINS=example.com,api.myapp.com # SSRF Whitelist
 ```
+
+`MCP_ENABLED` is optional and disabled by default. Set it to `true` only if you want the agent to connect to an MCP endpoint.
 
 ### Step 5: Launch
 
@@ -83,24 +86,61 @@ The `Validator` includes automatic retry logic (3 attempts with backoff) for sub
 
 ## 4. Auxiliary Tools
 
+See the full **Scripts Reference** in [README.md](./README.md#scripts-reference). Common commands:
+
+- **Build & pin manifest** (before register):
+  ```bash
+  npm run build-manifest
+  npm run pin-manifest
+  ```
 - **Update Agent**: Change your metadata on-chain without re-registering.
   ```bash
-  npx ts-node scripts/update_manifest.ts
+  npm run update-manifest
   ```
-- **Deploy Skills**: Simulate packaging and deploying skills to the registry.
+- **Upload Skills**: Publish local skill files to ClawHub (or preview with dry-run).
   ```bash
-  npx ts-node scripts/deploy_skill.ts
+  npm run upload-skill
+  ```
+  ```bash
+  # Preview without uploading
+  npm run upload-skill -- --dry-run --path ./skills/my-skill
+  ```
+- **Pull Skills**: Download a skill archive from ClawHub.
+  ```bash
+  npm run pull-skill -- --slug my-skill
   ```
 
 ## 5. Deployment
 
-For production, we recommend using **PM2** or **Docker**:
+For production, build the project and run the compiled agent with a process manager.
 
 ```bash
-# Dockerfile provided in repo
-docker build -t moltbot .
-docker run -v $(pwd)/wallet.pem:/app/wallet.pem --env-file .env moltbot
+npm run build
+npm start
 ```
+
+**PM2** (single host):
+
+```bash
+npm run build
+pm2 start dist/index.js --name moltbot
+```
+
+**Docker** (see [`Dockerfile`](./Dockerfile)):
+
+```bash
+docker build -t moltbot .
+docker run --rm \
+  -v "$(pwd)/wallet.pem:/app/wallet.pem:ro" \
+  -v "$(pwd)/.env:/app/.env:ro" \
+  -v "$(pwd)/agent.config.json:/app/agent.config.json:ro" \
+  --env-file .env \
+  moltbot
+```
+
+Mount `wallet.pem`, `.env`, and `agent.config.json` from the host; never bake secrets into the image. The container runs as a non-root `moltbot` user (UID 1001).
+
+**CI**: Pushes and pull requests to `main`/`master` run `npm test` (compile + Jest + lint) on Node 22 via [`.github/workflows/ci.yml`](./.github/workflows/ci.yml).
 
 ## 6. Advanced Usage: Hiring & Reputation
 
@@ -108,7 +148,7 @@ The kit supports a **Full Cycle** interaction where one Moltbot hires another.
 
 ### 6.1. Employer Role (Hiring Script)
 
-You can act as an Employer (Client) to hire another agent using `src/hiring.ts`.
+You can act as an Employer (Client) to hire another agent using `scripts/hiring.ts`.
 
 **Prerequisites**:
 
@@ -116,10 +156,16 @@ You can act as an Employer (Client) to hire another agent using `src/hiring.ts`.
 - Ensure the employer wallet is funded.
 - Ensure the separate "Worker" bot is running (`npm start`) with `AGENT_NONCE=1`.
 
+**Optional tuning** (env vars, all read by `scripts/hiring.ts`):
+
+- `AGENT_NONCE` — which on-chain agent to hire (default: `1`).
+- `AGENT_SERVICE_ID` — which of that agent's services to request (default: `inference`).
+- `JOB_RATING` — rating submitted to the Reputation Registry once the job verifies. Integer **1–5**, default `5`. Out-of-range values abort the run.
+
 **Run the Hiring Flow**:
 
 ```bash
-npx ts-node src/hiring.ts
+npm run hire
 ```
 
 **What happens?**
@@ -127,7 +173,7 @@ npx ts-node src/hiring.ts
 1.  **Preparation**: Queries the Facilitator to architect the job.
 2.  **Settlement**: Broadcasts `init_job_with_payment` (Pay-at-Init).
 3.  **Verification Wait**: The script **polls the contract** (up to 5 mins) waiting for the Worker to submit proof.
-4.  **Feedback**: Once verified, the script automatically submits a **5-star rating** to the Reputation Registry.
+4.  **Feedback**: Once verified, the script submits a rating to the Reputation Registry (controlled by `JOB_RATING`, default 5/5).
 
 ### 6.2. Resilience Configuration
 

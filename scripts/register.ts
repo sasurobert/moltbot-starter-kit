@@ -8,7 +8,6 @@ import {
   TransactionComputer,
   SmartContractTransactionsFactory,
   TransactionsFactoryConfig,
-  Abi,
   VariadicValue,
   Struct,
   BytesValue,
@@ -29,71 +28,21 @@ import {promises as fs} from 'fs';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import axios from 'axios';
-import {createHash} from 'crypto';
 import {CONFIG} from '../src/config';
 import {RelayerAddressCache} from '../src/utils/RelayerAddressCache';
+import {createPatchedAbi} from '../src/utils/abi';
+import * as identityAbiJson from '../src/abis/identity-registry.abi.json';
+import {PoWSolver} from '../src/pow';
 
 dotenv.config();
 
-// Setup TransactionComputer for serialization
 const txComputer = new TransactionComputer();
 const RELAYED_V3_EXTRA_GAS = 50_000n;
-
-interface Challenge {
-  difficulty: number;
-  address: string;
-  salt: string;
-}
-
-/**
- * Solve a Lib-based PoW Challenge for the Relayer
- */
-function solveChallenge(challenge: Challenge): string {
-  console.log(
-    `🧩 Solving PoW Challenge (Difficulty: ${challenge.difficulty} bits)...`,
-  );
-  const startTime = Date.now();
-  let nonce = 0;
-  const difficulty = challenge.difficulty;
-  const fullBytes = Math.floor(difficulty / 8);
-  const remainingBits = difficulty % 8;
-  const threshold = 1 << (8 - remainingBits);
-
-  while (true) {
-    const data = `${challenge.address}${challenge.salt}${nonce}`;
-    const hash = createHash('sha256').update(data).digest();
-
-    let isValid = true;
-    // Check full bytes
-    for (let i = 0; i < fullBytes; i++) {
-      if (hash[i] !== 0) {
-        isValid = false;
-        break;
-      }
-    }
-
-    if (isValid && remainingBits > 0) {
-      if (hash[fullBytes] >= threshold) {
-        isValid = false;
-      }
-    }
-
-    if (isValid) {
-      const timeTaken = (Date.now() - startTime) / 1000;
-      console.log(
-        `✅ Challenge Solved in ${timeTaken.toFixed(2)}s! Nonce: ${nonce}`,
-      );
-      return nonce.toString();
-    }
-    nonce++;
-  }
-}
 
 async function main() {
   console.log('🚀 Starting Agent Registration...');
 
-  // 1. Setup Provider & Signer
-  // Use ProxyProvider if Localhost (Chain Sim)
+  // Localhost = Chain Simulator, which only exposes the Proxy interface.
   const isLocal =
     CONFIG.API_URL.includes('localhost') ||
     CONFIG.API_URL.includes('127.0.0.1');
@@ -111,7 +60,6 @@ async function main() {
   const signer = UserSigner.fromPem(pemContent);
   const senderAddress = new Address(signer.getAddress().bech32());
 
-  // 2. Load Config
   const configPath = path.resolve('agent.config.json');
   let config: {
     agentName: string;
@@ -138,22 +86,12 @@ async function main() {
   }
   console.log(`Registering Agent: ${config.agentName}...`);
 
-  // 3. Load ABI and construct transaction using SmartContractTransactionsFactory
   const registryAddress = CONFIG.ADDRESSES.IDENTITY_REGISTRY;
   const account = await provider.getAccount({
     bech32: () => senderAddress.toBech32(),
   });
 
-  // Load the identity-registry ABI for proper argument encoding
-  const abiPath = path.resolve(__dirname, '..', 'identity-registry.abi.json');
-  const rawAbiStr = (await fs.readFile(abiPath, 'utf8'))
-    .replace(/\bTokenId\b/g, 'TokenIdentifier')
-    .replace(/\bNonZeroBigUint\b/g, 'BigUint')
-    .replace(/\bcounted-variadic\b/g, 'variadic')
-    .replace(/\bList</g, 'variadic<')
-    .replace(/\bPayment\b/g, 'EgldOrEsdtTokenPayment');
-  const abiJson = JSON.parse(rawAbiStr);
-  const abi = Abi.create(abiJson);
+  const abi = createPatchedAbi(identityAbiJson);
 
   const factoryConfig = new TransactionsFactoryConfig({
     chainID: CONFIG.CHAIN_ID,
@@ -163,12 +101,10 @@ async function main() {
     abi,
   });
 
-  // Build metadata entries matching the ABI's MetadataEntry struct
   const agentUri =
     config.manifestUri || `https://agent.molt.bot/${config.agentName}`;
   const publicKeyHex = senderAddress.toHex();
 
-  // Prepare metadata args: each entry is {key: Buffer, value: Buffer}
   const metadataArgs: Array<{key: Buffer; value: Buffer}> = [];
   if (config.metadata && config.metadata.length > 0) {
     for (const entry of config.metadata) {
@@ -189,8 +125,8 @@ async function main() {
   if (config.metadata?.length > 0)
     console.log(`Metadata: ${config.metadata.length} entries`);
 
-  // Construct the MetadataEntry StructType manually (avoids relying on abi.registry).
-  // MetadataEntry { key: bytes, value: bytes }
+  // Manual StructType construction avoids relying on `abi.registry` (which
+  // sdk-core v15 doesn't expose publicly) for argument encoding.
   const metadataType = new StructType('MetadataEntry', [
     new FieldDefinition('key', '', new BytesType()),
     new FieldDefinition('value', '', new BytesType()),
@@ -204,7 +140,6 @@ async function main() {
       ]),
   );
 
-  // Construct the ServiceConfigInput StructType manually.
   const serviceConfigType = new StructType('ServiceConfigInput', [
     new FieldDefinition('service_id', '', new U32Type()),
     new FieldDefinition('price', '', new BigUIntType()),
@@ -239,19 +174,18 @@ async function main() {
 
   tx.nonce = BigInt(account.nonce);
 
-  // Sign the transaction (always required, even for relaying)
+  // Inner-tx signature is required even when relaying — the relayer wraps but
+  // doesn't replace this signature.
   const serialized = txComputer.computeBytesForSigning(tx);
   const signature = await signer.sign(serialized);
   tx.signature = signature;
 
-  // 4. Determine Strategy (Local vs Relayer)
   const balance = BigInt(account.balance.toString());
   const useRelayer = balance === 0n || !!process.env.FORCE_RELAYER;
 
   if (useRelayer) {
     console.log('Empty wallet detected. Using Relayer fallback...');
     try {
-      // A. Get Challenge
       const {data: challenge} = await axios.post(
         `${CONFIG.PROVIDERS.RELAYER_URL}/challenge`,
         {
@@ -259,9 +193,8 @@ async function main() {
         },
       );
 
-      // A.1 Verify/Get Relayer Address for this Shard
-      // The Relayer Service requires the inner transaction's `relayer` field to match the
-      // relayer address for the user's shard.
+      // Relayed V3 requires the inner tx's `relayer` field to match the
+      // relayer assigned to the sender's shard, so look it up (cached).
       let relayerAddressBech32 = RelayerAddressCache.get(
         CONFIG.PROVIDERS.RELAYER_URL,
         senderAddress.toBech32(),
@@ -289,20 +222,18 @@ async function main() {
         console.log(`Using cached Relayer Address: ${relayerAddressBech32}`);
       }
 
-      // Update Transaction with Relayer if available (Required for Relayed V3)
       if (relayerAddressBech32) {
         tx.relayer = new Address(relayerAddressBech32);
         tx.gasLimit += RELAYED_V3_EXTRA_GAS;
-        // Re-sign because the content changed (relayer field and gasLimit are part of the signature)
+        // The relayer field and gasLimit are inside the signed payload, so
+        // we must re-sign after mutating them.
         const serializedRelayed = txComputer.computeBytesForSigning(tx);
         const signatureRelayed = await signer.sign(serializedRelayed);
         tx.signature = signatureRelayed;
       }
 
-      // B. Solve Challenge
-      const challengeNonce = solveChallenge(challenge);
+      const challengeNonce = new PoWSolver().solve(challenge);
 
-      // C. Relay
       console.log('Broadcasting via Relayer...');
       const {data: relayResult} = await axios.post(
         `${CONFIG.PROVIDERS.RELAYER_URL}/relay`,

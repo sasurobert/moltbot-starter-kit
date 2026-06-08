@@ -1,4 +1,23 @@
 {
+    "buildInfo": {
+        "rustc": {
+            "version": "1.86.0",
+            "commitHash": "05f9846f893b09a1be1fc8560e33fc3c815cfecb",
+            "commitDate": "2025-03-31",
+            "channel": "Stable",
+            "host": "x86_64-unknown-linux-gnu",
+            "short": "rustc 1.86.0 (05f9846f8 2025-03-31)",
+            "llvmVersion": "19.1"
+        },
+        "contractCrate": {
+            "name": "identity-registry",
+            "version": "0.1.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.64.2"
+        }
+    },
     "name": "IdentityRegistry",
     "constructor": {
         "inputs": [],
@@ -257,6 +276,38 @@
             ]
         },
         {
+            "docs": [
+                "Paginated list of agents. `from` = start index, `size` = max items (capped at 100)."
+            ],
+            "name": "get_agents",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "from",
+                    "type": "u64"
+                },
+                {
+                    "name": "size",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<AgentListEntry>"
+                }
+            ]
+        },
+        {
+            "name": "get_agent_count",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
             "name": "get_agent_owner",
             "mutability": "readonly",
             "inputs": [
@@ -292,6 +343,32 @@
             ]
         },
         {
+            "docs": [
+                "Paginated metadata entries for an agent. `from` = start index, `size` = max items (capped at 100)."
+            ],
+            "name": "get_agent_metadata_page",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "from",
+                    "type": "u64"
+                },
+                {
+                    "name": "size",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<MetadataEntry>"
+                }
+            ]
+        },
+        {
             "name": "get_agent_service_config",
             "mutability": "readonly",
             "inputs": [
@@ -308,6 +385,32 @@
                 {
                     "type": "optional<EgldOrEsdtTokenPayment>",
                     "multi_result": true
+                }
+            ]
+        },
+        {
+            "docs": [
+                "Paginated service configs for an agent. `from` = start index, `size` = max items (capped at 100)."
+            ],
+            "name": "get_agent_service_configs_page",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "from",
+                    "type": "u64"
+                },
+                {
+                    "name": "size",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<ServiceConfigEntry>"
                 }
             ]
         }
@@ -336,15 +439,29 @@
             "identifier": "agentUpdated",
             "inputs": [
                 {
+                    "name": "owner",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
                     "name": "nonce",
                     "type": "u64",
                     "indexed": true
+                },
+                {
+                    "name": "data",
+                    "type": "AgentUpdatedEventData"
                 }
             ]
         },
         {
             "identifier": "metadataUpdated",
             "inputs": [
+                {
+                    "name": "owner",
+                    "type": "Address",
+                    "indexed": true
+                },
                 {
                     "name": "nonce",
                     "type": "u64",
@@ -355,6 +472,11 @@
         {
             "identifier": "serviceConfigsUpdated",
             "inputs": [
+                {
+                    "name": "owner",
+                    "type": "Address",
+                    "indexed": true
+                },
                 {
                     "name": "nonce",
                     "type": "u64",
@@ -379,6 +501,26 @@
                 }
             ]
         },
+        "AgentListEntry": {
+            "type": "struct",
+            "docs": [
+                "Paginated agent entry: nonce, owner, and details."
+            ],
+            "fields": [
+                {
+                    "name": "nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "owner",
+                    "type": "Address"
+                },
+                {
+                    "name": "details",
+                    "type": "AgentDetails"
+                }
+            ]
+        },
         "AgentRegisteredEventData": {
             "type": "struct",
             "fields": [
@@ -389,6 +531,27 @@
                 {
                     "name": "uri",
                     "type": "bytes"
+                }
+            ]
+        },
+        "AgentUpdatedEventData": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "new_name",
+                    "type": "bytes"
+                },
+                {
+                    "name": "new_uri",
+                    "type": "bytes"
+                },
+                {
+                    "name": "metadata_updated",
+                    "type": "bool"
+                },
+                {
+                    "name": "services_updated",
+                    "type": "bool"
                 }
             ]
         },
@@ -422,20 +585,19 @@
                 }
             ]
         },
-        "Payment": {
+        "ServiceConfigEntry": {
             "type": "struct",
+            "docs": [
+                "Paginated service config entry: service_id and payment."
+            ],
             "fields": [
                 {
-                    "name": "token_identifier",
-                    "type": "TokenId"
+                    "name": "service_id",
+                    "type": "u32"
                 },
                 {
-                    "name": "token_nonce",
-                    "type": "u64"
-                },
-                {
-                    "name": "amount",
-                    "type": "NonZeroBigUint"
+                    "name": "payment",
+                    "type": "EgldOrEsdtTokenPayment"
                 }
             ]
         },

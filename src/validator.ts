@@ -1,20 +1,21 @@
-import {UserSigner} from '@multiversx/sdk-wallet';
 import {
   Address,
   TransactionComputer,
   VariadicValue,
 } from '@multiversx/sdk-core';
-import {ApiNetworkProvider} from '@multiversx/sdk-network-providers';
 import axios from 'axios';
-import {promises as fs} from 'fs';
-import * as path from 'path';
 import {CONFIG} from './config';
 import * as identityAbiJson from './abis/identity-registry.abi.json';
 import * as validationAbiJson from './abis/validation-registry.abi.json';
 import {Logger} from './utils/logger';
 import {PoWSolver} from './pow';
-import {createEntrypoint} from './utils/entrypoint';
-import {createPatchedAbi} from './utils/abi';
+import {
+  loadSignerWithAddress,
+  createProvider,
+  createEntrypoint,
+  createPatchedAbi,
+  withRelayer,
+} from './chain';
 
 export class Validator {
   private logger = new Logger('Validator');
@@ -29,64 +30,51 @@ export class Validator {
   async submitProof(jobId: string, resultHash: string): Promise<string> {
     this.logger.info(`Submitting proof for ${jobId}:hash=${resultHash}`);
 
-    // 1. Setup Provider & Signer
-    const provider = new ApiNetworkProvider(CONFIG.API_URL, {
-      clientName: 'moltbot',
-      timeout: CONFIG.REQUEST_TIMEOUT,
-    });
+    const provider = createProvider('moltbot');
+    const {signer, senderAddress} = await loadSignerWithAddress();
 
-    const pemPath =
-      process.env.MULTIVERSX_PRIVATE_KEY || path.resolve('wallet.pem');
-    const pemContent = await fs.readFile(pemPath, 'utf8');
-    const signer = UserSigner.fromPem(pemContent);
-    const senderAddress = new Address(signer.getAddress().bech32());
-
-    // 2. Fetch Account State (Nonce) with Timeout
-    const account = await this.withTimeout(
-      provider.getAccount({bech32: () => senderAddress.toBech32()}),
-      'Fetching Account',
-    );
-
-    // 3. Construct Transaction using ABI Factory
     const entrypoint = createEntrypoint();
     const validationAbi = createPatchedAbi(validationAbiJson);
     const factory =
       entrypoint.createSmartContractTransactionsFactory(validationAbi);
-
     const receiver = new Address(CONFIG.ADDRESSES.VALIDATION_REGISTRY);
 
-    const tx = await factory.createTransactionForExecute(senderAddress, {
-      contract: receiver,
-      function: 'submit_proof',
-      gasLimit: BigInt(CONFIG.GAS_LIMITS.SUBMIT_PROOF),
-      arguments: [Buffer.from(jobId), Buffer.from(resultHash, 'hex')],
-    });
+    // Each attempt re-fetches the nonce and re-signs, so a retry uses a fresh
+    // transaction object instead of re-broadcasting an already-rejected one.
+    const buildAndSign = async () => {
+      const account = await this.withTimeout(
+        provider.getAccount({bech32: () => senderAddress.toBech32()}),
+        'Fetching Account',
+      );
 
-    tx.nonce = BigInt(account.nonce); // Override with fetched nonce
+      const tx = await factory.createTransactionForExecute(senderAddress, {
+        contract: receiver,
+        function: 'submit_proof',
+        gasLimit: BigInt(CONFIG.GAS_LIMITS.SUBMIT_PROOF),
+        arguments: [Buffer.from(jobId), Buffer.from(resultHash, 'hex')],
+      });
 
-    // 4. Relayer or Direct?
-    if (this.relayerUrl && this.relayerAddress) {
-      this.logger.info('Using Gasless Relayer V3...');
-      tx.relayer = new Address(this.relayerAddress);
-      tx.version = 2;
-      tx.gasLimit =
-        BigInt(tx.gasLimit.toString()) + CONFIG.RELAYER_GAS_OVERHEAD;
-    }
+      tx.nonce = BigInt(account.nonce);
 
-    // 5. Sign
-    const serialized = this.txComputer.computeBytesForSigning(tx);
-    const signature = await signer.sign(serialized);
-    tx.signature = signature;
+      if (this.relayerUrl && this.relayerAddress) {
+        withRelayer(tx, new Address(this.relayerAddress));
+      }
 
-    // 6. Broadcast (with Retry & Auto-Registration)
+      tx.signature = await signer.sign(
+        this.txComputer.computeBytesForSigning(tx),
+      );
+
+      return tx;
+    };
+
     let attempts = 0;
     const maxAttempts = 3;
     while (attempts < maxAttempts) {
       try {
+        const tx = await buildAndSign();
         let txHash = '';
 
         if (this.relayerUrl && this.relayerAddress) {
-          // Send to Relayer
           this.logger.info(`Sending to Relayer Service: ${this.relayerUrl}`);
           const relayRes = await axios.post(
             `${this.relayerUrl}/relay`,
@@ -95,7 +83,6 @@ export class Validator {
           );
           txHash = relayRes.data.txHash;
         } else {
-          // Direct
           txHash = await this.withTimeout(
             provider.sendTransaction(tx),
             'Broadcasting Transaction',
@@ -106,14 +93,28 @@ export class Validator {
         return txHash;
       } catch (e: unknown) {
         const err = e as {
-          response?: {data?: {error?: string}; status?: number};
+          response?: {
+            data?: {error?: string; code?: string};
+            status?: number;
+          };
           message?: string;
         };
         const msg = err.response?.data?.error || err.message;
         const status = err.response?.status;
+        const errorCode = err.response?.data?.code;
 
-        // Auto-Registration on 403
-        if (status === 403 && msg?.includes('register')) {
+        // Relayer auto-registration contract:
+        //   Preferred: relayer returns { status: 403, code: 'AGENT_NOT_REGISTERED' }.
+        //   Fallback : when no `code` is set, match the message against a
+        //              tight regex (kept only for older relayers; any other
+        //              403 surfaces as a real authz failure).
+        const isUnregistered =
+          errorCode === 'AGENT_NOT_REGISTERED' ||
+          (errorCode === undefined &&
+            status === 403 &&
+            /agent.+not.+register|not.+register.+agent/i.test(msg ?? ''));
+
+        if (isUnregistered) {
           this.logger.warn(
             'Agent not registered. Initiating Auto-Registration...',
           );
@@ -122,21 +123,22 @@ export class Validator {
             this.logger.info(
               'Registration successful. Retrying proof submission...',
             );
-            attempts--; // Don't count registration as a failed attempt
+            // Registration is a side-quest, not a failed proof submission.
+            attempts--;
             continue;
           } catch (regError) {
             this.logger.error(
               'Auto-Registration failed:',
               (regError as Error).message,
             );
-            throw regError; // Fail fast if registration fails
+            throw regError;
           }
         }
 
         attempts++;
         this.logger.warn(`Tx Broadcast Attempt ${attempts} failed: ${msg}`);
         if (attempts >= maxAttempts) throw e;
-        await new Promise(r => setTimeout(r, 1000 * attempts)); // Backoff
+        await new Promise(r => setTimeout(r, 1000 * attempts));
       }
     }
     throw new Error('Failed to broadcast transaction after retries');
@@ -148,31 +150,22 @@ export class Validator {
     }
 
     this.logger.info('Fetching PoW Challenge...');
-    const pemPath =
-      process.env.MULTIVERSX_PRIVATE_KEY || path.resolve('wallet.pem');
-    const pemContent = await fs.readFile(pemPath, 'utf8');
-    const signer = UserSigner.fromPem(pemContent);
-    const senderAddress = new Address(signer.getAddress().bech32());
+    // No signer needed: relayer authorizes registration via PoW challenge,
+    // not via inner-tx signature.
+    const {senderAddress} = await loadSignerWithAddress();
 
-    // 1. Get Challenge
     const challengeRes = await axios.post(`${this.relayerUrl}/challenge`, {
       address: senderAddress.toBech32(),
     });
     const challenge = challengeRes.data;
 
-    // 2. Solve
-    const solver = new PoWSolver();
-    const nonce = solver.solve(challenge);
+    const nonce = new PoWSolver().solve(challenge);
 
-    // 3. Create Registration Tx
-    const provider = new ApiNetworkProvider(CONFIG.API_URL, {
-      clientName: 'moltbot',
-    });
+    const provider = createProvider('moltbot');
     const account = await provider.getAccount({
       bech32: () => senderAddress.toBech32(),
     });
 
-    // 3. Create Registration Tx using ABI Factory
     const entrypoint = createEntrypoint();
     const identityAbi = createPatchedAbi(identityAbiJson);
     const factory =
@@ -192,10 +185,8 @@ export class Validator {
     });
 
     tx.nonce = BigInt(account.nonce);
-    tx.version = 2;
-    tx.relayer = new Address(this.relayerAddress);
+    withRelayer(tx, new Address(this.relayerAddress));
 
-    // 4. Relay with Nonce
     this.logger.info('Relaying Registration Transaction...');
     const relayRes = await axios.post(`${this.relayerUrl}/relay`, {
       transaction: tx.toPlainObject(),
@@ -204,14 +195,8 @@ export class Validator {
 
     this.logger.info(`Registration Tx Sent: ${relayRes.data.txHash}`);
 
-    // Wait for it? Optional. Relayer auth check is on-chain or challenge.
-    // If we want "isAuthorized" to pass via on-chain check, we must wait.
-    // If "isAuthorized" passes via challenge-cache (if implemented), we could proceed.
-    // But our Relayer logic is: isRegisteredOnChain OR (RegisterTx + Challenge).
-    // Proof submission is NOT a register tx. So for proof submission to pass,
-    // the agent MUST BE ON-CHAIN.
-    // So we MUST wait for registration to process.
-
+    // submit_proof requires the agent to be on-chain (relayer does not accept
+    // a register+proof bundle), so block here until the registration tx lands.
     this.logger.info('Waiting for registration to be confirmed...');
     await this.waitForTx(relayRes.data.txHash);
   }
@@ -230,10 +215,7 @@ export class Validator {
   }
 
   async getTxStatus(txHash: string): Promise<string> {
-    const provider = new ApiNetworkProvider(CONFIG.API_URL, {
-      clientName: 'moltbot',
-      timeout: CONFIG.REQUEST_TIMEOUT,
-    });
+    const provider = createProvider('moltbot');
     try {
       const tx = await this.withTimeout(
         provider.getTransaction(txHash),
@@ -242,7 +224,6 @@ export class Validator {
       return tx.status.toString().toLowerCase();
     } catch (e: unknown) {
       const err = e as {response?: {status?: number}; message?: string};
-      // Handle 404 as 'not_found'
       if (err.response?.status === 404 || err.message?.includes('404')) {
         return 'not_found';
       }

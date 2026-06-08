@@ -1,4 +1,23 @@
 {
+    "buildInfo": {
+        "rustc": {
+            "version": "1.86.0",
+            "commitHash": "05f9846f893b09a1be1fc8560e33fc3c815cfecb",
+            "commitDate": "2025-03-31",
+            "channel": "Stable",
+            "host": "x86_64-unknown-linux-gnu",
+            "short": "rustc 1.86.0 (05f9846f8 2025-03-31)",
+            "llvmVersion": "19.1"
+        },
+        "contractCrate": {
+            "name": "validation-registry",
+            "version": "0.1.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.64.2"
+        }
+    },
     "name": "ValidationRegistry",
     "constructor": {
         "inputs": [
@@ -214,6 +233,32 @@
             ]
         },
         {
+            "docs": [
+                "Paginated validation hashes for an agent. `from` = start index, `size` = max items (capped at 100)."
+            ],
+            "name": "get_agent_validations_page",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "agent_nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "from",
+                    "type": "u64"
+                },
+                {
+                    "name": "size",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<bytes>"
+                }
+            ]
+        },
+        {
             "name": "set_identity_registry_address",
             "onlyOwner": true,
             "mutability": "mutable",
@@ -228,8 +273,37 @@
     ],
     "events": [
         {
+            "identifier": "jobInitialized",
+            "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes",
+                    "indexed": true
+                },
+                {
+                    "name": "employer",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "agent_nonce",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "service_id",
+                    "type": "Option<u32>"
+                }
+            ]
+        },
+        {
             "identifier": "validationRequest",
             "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes",
+                    "indexed": true
+                },
                 {
                     "name": "validator_address",
                     "type": "Address",
@@ -254,6 +328,11 @@
         {
             "identifier": "validationResponse",
             "inputs": [
+                {
+                    "name": "job_id",
+                    "type": "bytes",
+                    "indexed": true
+                },
                 {
                     "name": "validator_address",
                     "type": "Address",
