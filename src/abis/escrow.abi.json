@@ -92,6 +92,7 @@
         {
             "docs": [
                 "Refund escrowed funds to the employer if the deadline has passed.",
+                "Cannot refund if the job has been verified.",
                 "Anyone can call this (allows automated cleanup)."
             ],
             "name": "refund",

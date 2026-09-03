@@ -73,7 +73,10 @@ export class MoltbotMppSkill {
     const txHash = await this.provider.sendTransaction(tx);
 
     let status = 'pending';
-    while (status === 'pending') {
+    let attempts = 0;
+    const maxAttempts = 30; // 60 seconds maximum timeout
+    while (status === 'pending' && attempts < maxAttempts) {
+      attempts++;
       await new Promise(r => setTimeout(r, 2000));
       try {
         const txInfo = await this.provider.getTransaction(txHash);
@@ -82,9 +85,18 @@ export class MoltbotMppSkill {
         } else if (txInfo.status.isFailed() || txInfo.status.isInvalid()) {
           throw new Error('Payment transaction failed on chain');
         }
-      } catch {
+      } catch (err) {
+        if (err instanceof Error && err.message.includes('failed on chain')) {
+          throw err;
+        }
         /* ignore fetching delays */
       }
+    }
+
+    if (status !== 'success') {
+      throw new Error(
+        `Payment transaction polling timed out after ${maxAttempts * 2}s. Hash: ${txHash}`,
+      );
     }
 
     return txHash;
@@ -92,24 +104,29 @@ export class MoltbotMppSkill {
 
   /**
    * Generates a deterministic channel ID for a session.
+   * Matches mpp-session-mvx: keccak256(employer + receiver + channel_nonce).
    */
   computeChannelId(
     receiver: string,
-    token: string,
+    tokenOrNonce?: string | number | bigint,
     nonce: number | bigint = 0n,
   ): string {
     const employer = this.signer.getAddress().bech32();
     const employerAddr = Address.newFromBech32(employer);
     const receiverAddr = Address.newFromBech32(receiver);
 
+    const actualNonce =
+      typeof tokenOrNonce === 'number' || typeof tokenOrNonce === 'bigint'
+        ? tokenOrNonce
+        : nonce;
+
     const hasher = keccak_256.create();
     hasher.update(employerAddr.getPublicKey());
     hasher.update(receiverAddr.getPublicKey());
-    hasher.update(Buffer.from(token));
 
     // Nonce as 8 bytes big endian
     const nonceBuf = Buffer.alloc(8);
-    nonceBuf.writeBigUInt64BE(BigInt(nonce));
+    nonceBuf.writeBigUInt64BE(BigInt(actualNonce));
     hasher.update(nonceBuf);
 
     return bytesToHex(hasher.digest());
